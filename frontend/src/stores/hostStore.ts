@@ -1,6 +1,19 @@
 import { create } from 'zustand'
 import { Host } from '../types/host'
-import { ListHosts, CreateHost, UpdateHost, DeleteHost } from '../../wails/go/main/App'
+
+// Wails bindings will be generated at runtime
+type AppBindings = {
+  ListHosts: () => Promise<Host[]>
+  CreateHost: (host: Host) => Promise<void>
+  UpdateHost: (host: Host) => Promise<void>
+  DeleteHost: (id: string) => Promise<void>
+}
+
+declare global {
+  interface Window {
+    App: AppBindings
+  }
+}
 
 interface HostStore {
   hosts: Host[]
@@ -20,7 +33,7 @@ export const useHostStore = create<HostStore>((set) => ({
   fetchHosts: async () => {
     set({ loading: true, error: null })
     try {
-      const hosts = await ListHosts()
+      const hosts = await window.App.ListHosts()
       set({ hosts: hosts || [] })
     } catch (err) {
       set({ error: (err as Error).message })
@@ -31,7 +44,7 @@ export const useHostStore = create<HostStore>((set) => ({
 
   addHost: async (host: Host) => {
     try {
-      await CreateHost(host)
+      await window.App.CreateHost(host)
       set((state) => ({ hosts: [...state.hosts, host] }))
     } catch (err) {
       set({ error: (err as Error).message })
@@ -40,7 +53,7 @@ export const useHostStore = create<HostStore>((set) => ({
 
   updateHost: async (host: Host) => {
     try {
-      await UpdateHost(host)
+      await window.App.UpdateHost(host)
       set((state) => ({
         hosts: state.hosts.map((h) => (h.id === host.id ? host : h)),
       }))
@@ -51,7 +64,7 @@ export const useHostStore = create<HostStore>((set) => ({
 
   removeHost: async (id: string) => {
     try {
-      await DeleteHost(id)
+      await window.App.DeleteHost(id)
       set((state) => ({
         hosts: state.hosts.filter((h) => h.id !== id),
       }))
