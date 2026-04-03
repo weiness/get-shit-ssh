@@ -7,6 +7,12 @@ type AppBindings = {
   CreateHost: (host: Host) => Promise<void>
   UpdateHost: (host: Host) => Promise<void>
   DeleteHost: (id: string) => Promise<void>
+  SSHConnect: (hostID: string) => Promise<string>
+  SSHDisconnect: (sessionID: string) => Promise<void>
+  OpenTerminal: (sessionID: string, rows: number, cols: number) => Promise<string>
+  TerminalInput: (termID: string, data: string) => Promise<void>
+  TerminalResize: (termID: string, rows: number, cols: number) => Promise<void>
+  TerminalClose: (termID: string) => Promise<void>
 }
 
 declare global {

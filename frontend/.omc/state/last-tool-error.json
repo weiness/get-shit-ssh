@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"go build 2>&1\",\"description\":\"Build Go backend\"}",
+  "error": "Exit code 1\n/c/Users/lcwei2/.bashrc: line 1: $'\\377\\376cd': command not found\n/c/Users/lcwei2/.bashrc: line 2: d:\\wsl: Is a directory\nno Go files in D:\\code\\github\\gss\\frontend",
+  "timestamp": "2026-04-03T09:06:22.224Z",
+  "retry_count": 1
+}

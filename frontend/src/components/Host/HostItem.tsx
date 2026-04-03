@@ -1,13 +1,14 @@
 import { Host } from '../../types/host'
-import { Edit2, Trash2, Server } from 'lucide-react'
+import { Edit2, Trash2, Server, Terminal } from 'lucide-react'
 
 interface HostItemProps {
   host: Host
   onEdit: (host: Host) => void
   onDelete: (id: string) => void
+  onConnect: (hostID: string, hostName: string) => void
 }
 
-export function HostItem({ host, onEdit, onDelete }: HostItemProps) {
+export function HostItem({ host, onEdit, onDelete, onConnect }: HostItemProps) {
   return (
     <div className="flex items-center justify-between p-4 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
       <div className="flex items-center gap-3 flex-1">
@@ -20,6 +21,13 @@ export function HostItem({ host, onEdit, onDelete }: HostItemProps) {
         </div>
       </div>
       <div className="flex gap-2">
+        <button
+          onClick={() => onConnect(host.id, host.name)}
+          className="p-2 hover:bg-green-100 dark:hover:bg-green-900 rounded-lg transition-colors"
+          aria-label="Connect"
+        >
+          <Terminal size={18} className="text-green-500" />
+        </button>
         <button
           onClick={() => onEdit(host)}
           className="p-2 hover:bg-blue-100 dark:hover:bg-blue-900 rounded-lg transition-colors"
