@@ -13,12 +13,13 @@ import (
 )
 
 type App struct {
-	ctx       context.Context
-	db        *store.DB
-	sshMgr    *ssh.Manager
-	terminals sync.Map // termID string -> *ssh.TerminalSession
-	sftpSess  sync.Map // sftpID string -> *ssh.SFTPSession
-	encKey    []byte
+	ctx        context.Context
+	db         *store.DB
+	sshMgr     *ssh.Manager
+	terminals  sync.Map // termID string -> *ssh.TerminalSession
+	sftpSess   sync.Map // sftpID string -> *ssh.SFTPSession
+	sessionLog sync.Map // sessionID string -> logID string
+	encKey     []byte
 }
 
 func NewApp() *App {
@@ -88,11 +89,20 @@ func (a *App) SSHConnect(hostID string) (string, error) {
 		return "", fmt.Errorf("failed to connect: %w", err)
 	}
 
+	// Record session start
+	addr := fmt.Sprintf("%s:%d", host.Host, host.Port)
+	if log, e := a.db.LogSessionStart(host.ID, host.Name, host.Username, addr); e == nil {
+		a.sessionLog.Store(sessionID, log.ID)
+	}
+
 	return sessionID, nil
 }
 
 // SSHDisconnect closes an SSH session
 func (a *App) SSHDisconnect(sessionID string) error {
+	if logID, ok := a.sessionLog.LoadAndDelete(sessionID); ok {
+		_ = a.db.LogSessionEnd(logID.(string))
+	}
 	return a.sshMgr.Close(sessionID)
 }
 
@@ -345,7 +355,18 @@ func (a *App) CreateHostWithKey(h *store.Host, keyID string) error {
 }
 
 // UpdateHostWithPassword updates a host config to use password authentication.
+// If password is empty, the existing secret is preserved (metadata-only update).
 func (a *App) UpdateHostWithPassword(h *store.Host, password string) error {
+	if password == "" {
+		existing, err := a.db.GetHost(h.ID)
+		if err != nil || existing == nil {
+			return errors.New("host not found")
+		}
+		h.AuthType = existing.AuthType
+		h.Secret = existing.Secret
+		h.KeyID = existing.KeyID
+		return a.db.UpdateHost(h)
+	}
 	enc, err := crypto.Encrypt(a.encKey, []byte(password))
 	if err != nil {
 		return fmt.Errorf("encrypt password: %w", err)
@@ -374,4 +395,14 @@ func (a *App) UpdateHostWithKey(h *store.Host, keyID string) error {
 // encryptKey is a thin wrapper so we can test without importing crypto directly.
 func encryptKey(encKey, plaintext []byte) ([]byte, error) {
 	return crypto.Encrypt(encKey, plaintext)
+}
+
+// ListSessionLogs returns recent session history (up to 100 entries).
+func (a *App) ListSessionLogs() ([]*store.SessionLog, error) {
+	return a.db.ListSessionLogs(100)
+}
+
+// ClearSessionLogs deletes all session history.
+func (a *App) ClearSessionLogs() error {
+	return a.db.ClearSessionLogs()
 }

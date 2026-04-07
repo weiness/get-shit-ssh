@@ -65,6 +65,15 @@ func (db *DB) migrate() error {
 			private_key BLOB NOT NULL,
 			created_at  INTEGER NOT NULL
 		);
+		CREATE TABLE IF NOT EXISTS session_logs (
+			id           TEXT PRIMARY KEY,
+			host_id      TEXT NOT NULL,
+			host_name    TEXT NOT NULL,
+			username     TEXT NOT NULL,
+			address      TEXT NOT NULL,
+			connected_at INTEGER NOT NULL,
+			duration     INTEGER NOT NULL DEFAULT 0
+		);
 	`)
 	return err
 }

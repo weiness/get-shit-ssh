@@ -42,3 +42,6 @@ export function CreateHostWithPassword(arg1:store.Host,arg2:string):Promise<void
 export function CreateHostWithKey(arg1:store.Host,arg2:string):Promise<void>;
 export function UpdateHostWithPassword(arg1:store.Host,arg2:string):Promise<void>;
 export function UpdateHostWithKey(arg1:store.Host,arg2:string):Promise<void>;
+
+export function ListSessionLogs():Promise<Array<store.SessionLog>>;
+export function ClearSessionLogs():Promise<void>;

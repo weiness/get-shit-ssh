@@ -113,3 +113,11 @@ export function UpdateHostWithPassword(arg1, arg2) {
 export function UpdateHostWithKey(arg1, arg2) {
   return window['go']['main']['App']['UpdateHostWithKey'](arg1, arg2);
 }
+
+export function ListSessionLogs() {
+  return window['go']['main']['App']['ListSessionLogs']();
+}
+
+export function ClearSessionLogs() {
+  return window['go']['main']['App']['ClearSessionLogs']();
+}
