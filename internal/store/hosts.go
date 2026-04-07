@@ -9,17 +9,17 @@ import (
 )
 
 type Host struct {
-	ID        string
-	Name      string
-	GroupName string
-	Host      string
-	Port      int
-	Username  string
-	AuthType  string // "password" | "key"
-	Secret    []byte // AES-GCM 加密后的密码或私钥内容
-	KeyID     string
-	CreatedAt int64
-	UpdatedAt int64
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	GroupName string `json:"groupName"`
+	Host      string `json:"host"`
+	Port      int    `json:"port"`
+	Username  string `json:"username"`
+	AuthType  string `json:"authType"` // "password" | "key"
+	Secret    []byte `json:"secret,omitempty"`
+	KeyID     string `json:"keyId"`
+	CreatedAt int64  `json:"createdAt"`
+	UpdatedAt int64  `json:"updatedAt"`
 }
 
 func (db *DB) CreateHost(h *Host) error {

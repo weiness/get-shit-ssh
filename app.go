@@ -315,6 +315,62 @@ func (a *App) GetPublicKey(id string) (string, error) {
 	return info.PublicKey, nil
 }
 
+// CreateHostWithPassword creates a host config using password authentication.
+// The plaintext password is encrypted server-side before storage.
+func (a *App) CreateHostWithPassword(h *store.Host, password string) error {
+	enc, err := crypto.Encrypt(a.encKey, []byte(password))
+	if err != nil {
+		return fmt.Errorf("encrypt password: %w", err)
+	}
+	h.AuthType = "password"
+	h.Secret = enc
+	h.KeyID = ""
+	return a.db.CreateHost(h)
+}
+
+// CreateHostWithKey creates a host config using SSH key authentication.
+// keyID must reference an existing stored key.
+func (a *App) CreateHostWithKey(h *store.Host, keyID string) error {
+	_, encPriv, err := a.db.GetKey(keyID)
+	if err != nil {
+		return fmt.Errorf("get key: %w", err)
+	}
+	if encPriv == nil {
+		return errors.New("key not found")
+	}
+	h.AuthType = "key"
+	h.KeyID = keyID
+	h.Secret = encPriv
+	return a.db.CreateHost(h)
+}
+
+// UpdateHostWithPassword updates a host config to use password authentication.
+func (a *App) UpdateHostWithPassword(h *store.Host, password string) error {
+	enc, err := crypto.Encrypt(a.encKey, []byte(password))
+	if err != nil {
+		return fmt.Errorf("encrypt password: %w", err)
+	}
+	h.AuthType = "password"
+	h.Secret = enc
+	h.KeyID = ""
+	return a.db.UpdateHost(h)
+}
+
+// UpdateHostWithKey updates a host config to use SSH key authentication.
+func (a *App) UpdateHostWithKey(h *store.Host, keyID string) error {
+	_, encPriv, err := a.db.GetKey(keyID)
+	if err != nil {
+		return fmt.Errorf("get key: %w", err)
+	}
+	if encPriv == nil {
+		return errors.New("key not found")
+	}
+	h.AuthType = "key"
+	h.KeyID = keyID
+	h.Secret = encPriv
+	return a.db.UpdateHost(h)
+}
+
 // encryptKey is a thin wrapper so we can test without importing crypto directly.
 func encryptKey(encKey, plaintext []byte) ([]byte, error) {
 	return crypto.Encrypt(encKey, plaintext)

@@ -1,33 +1,16 @@
 import { create } from 'zustand'
+import * as App from '../../wailsjs/go/main/App'
 import { Host } from '../types/host'
-
-// Wails bindings will be generated at runtime
-type AppBindings = {
-  ListHosts: () => Promise<Host[]>
-  CreateHost: (host: Host) => Promise<void>
-  UpdateHost: (host: Host) => Promise<void>
-  DeleteHost: (id: string) => Promise<void>
-  SSHConnect: (hostID: string) => Promise<string>
-  SSHDisconnect: (sessionID: string) => Promise<void>
-  OpenTerminal: (sessionID: string, rows: number, cols: number) => Promise<string>
-  TerminalInput: (termID: string, data: string) => Promise<void>
-  TerminalResize: (termID: string, rows: number, cols: number) => Promise<void>
-  TerminalClose: (termID: string) => Promise<void>
-}
-
-declare global {
-  interface Window {
-    App: AppBindings
-  }
-}
 
 interface HostStore {
   hosts: Host[]
   loading: boolean
   error: string | null
   fetchHosts: () => Promise<void>
-  addHost: (host: Host) => Promise<void>
-  updateHost: (host: Host) => Promise<void>
+  addHostWithPassword: (host: Host, password: string) => Promise<void>
+  addHostWithKey: (host: Host, keyID: string) => Promise<void>
+  updateHostWithPassword: (host: Host, password: string) => Promise<void>
+  updateHostWithKey: (host: Host, keyID: string) => Promise<void>
   removeHost: (id: string) => Promise<void>
 }
 
@@ -39,43 +22,39 @@ export const useHostStore = create<HostStore>((set) => ({
   fetchHosts: async () => {
     set({ loading: true, error: null })
     try {
-      const hosts = await window.App.ListHosts()
-      set({ hosts: hosts || [] })
+      const hosts = await App.ListHosts()
+      set({ hosts: (hosts as unknown as Host[]) || [], loading: false })
     } catch (err) {
-      set({ error: (err as Error).message })
-    } finally {
-      set({ loading: false })
+      set({ error: String(err), loading: false })
     }
   },
 
-  addHost: async (host: Host) => {
-    try {
-      await window.App.CreateHost(host)
-      set((state) => ({ hosts: [...state.hosts, host] }))
-    } catch (err) {
-      set({ error: (err as Error).message })
-    }
+  addHostWithPassword: async (host, password) => {
+    await App.CreateHostWithPassword(host as any, password)
+    const hosts = await App.ListHosts()
+    set({ hosts: (hosts as unknown as Host[]) || [] })
   },
 
-  updateHost: async (host: Host) => {
-    try {
-      await window.App.UpdateHost(host)
-      set((state) => ({
-        hosts: state.hosts.map((h) => (h.id === host.id ? host : h)),
-      }))
-    } catch (err) {
-      set({ error: (err as Error).message })
-    }
+  addHostWithKey: async (host, keyID) => {
+    await App.CreateHostWithKey(host as any, keyID)
+    const hosts = await App.ListHosts()
+    set({ hosts: (hosts as unknown as Host[]) || [] })
   },
 
-  removeHost: async (id: string) => {
-    try {
-      await window.App.DeleteHost(id)
-      set((state) => ({
-        hosts: state.hosts.filter((h) => h.id !== id),
-      }))
-    } catch (err) {
-      set({ error: (err as Error).message })
-    }
+  updateHostWithPassword: async (host, password) => {
+    await App.UpdateHostWithPassword(host as any, password)
+    const hosts = await App.ListHosts()
+    set({ hosts: (hosts as unknown as Host[]) || [] })
+  },
+
+  updateHostWithKey: async (host, keyID) => {
+    await App.UpdateHostWithKey(host as any, keyID)
+    const hosts = await App.ListHosts()
+    set({ hosts: (hosts as unknown as Host[]) || [] })
+  },
+
+  removeHost: async (id) => {
+    await App.DeleteHost(id)
+    set((state) => ({ hosts: state.hosts.filter((h) => h.id !== id) }))
   },
 }))

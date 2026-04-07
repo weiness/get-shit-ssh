@@ -11,7 +11,7 @@ import { Plus } from 'lucide-react'
 type PanelMode = 'terminal' | 'sftp' | null
 
 export function HostList() {
-  const { hosts, fetchHosts, addHost, updateHost, removeHost } = useHostStore()
+  const { hosts, fetchHosts, removeHost } = useHostStore()
   const { connect, openTerminal } = useSessionStore()
   const [editingHost, setEditingHost] = useState<Host | undefined>()
   const [showForm, setShowForm] = useState(false)
@@ -20,26 +20,20 @@ export function HostList() {
   const [panelMode, setPanelMode] = useState<PanelMode>(null)
   const [connecting, setConnecting] = useState(false)
 
-  useEffect(() => {
-    fetchHosts()
-  }, [fetchHosts])
-
-  const handleSubmit = async (host: Host) => {
-    if (editingHost) {
-      await updateHost(host)
-      setEditingHost(undefined)
-    } else {
-      await addHost(host)
-    }
-    setShowForm(false)
-  }
+  useEffect(() => { fetchHosts() }, [fetchHosts])
 
   const handleEdit = (host: Host) => {
     setEditingHost(host)
     setShowForm(true)
   }
 
-  const handleCancel = () => {
+  const handleFormDone = () => {
+    setShowForm(false)
+    setEditingHost(undefined)
+    fetchHosts()
+  }
+
+  const handleFormCancel = () => {
     setShowForm(false)
     setEditingHost(undefined)
   }
@@ -84,7 +78,7 @@ export function HostList() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">主机管理</h1>
           <button
-            onClick={() => setShowForm(true)}
+            onClick={() => { setEditingHost(undefined); setShowForm(true) }}
             disabled={connecting}
             className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white px-4 py-2 rounded-lg transition-colors"
           >
@@ -111,28 +105,22 @@ export function HostList() {
             ))
           )}
         </div>
-
-        {showForm && (
-          <HostForm host={editingHost} onSubmit={handleSubmit} onCancel={handleCancel} />
-        )}
       </div>
 
       {panelMode === 'terminal' && activeTerminal && (
         <div className="w-1/2 border-l border-gray-300 dark:border-gray-600">
-          <TerminalPane
-            termID={activeTerminal}
-            onClose={handleClosePanel}
-          />
+          <TerminalPane termID={activeTerminal} onClose={handleClosePanel} />
         </div>
       )}
 
       {panelMode === 'sftp' && activeSessionID && (
         <div className="w-1/2 border-l border-gray-300 dark:border-gray-600">
-          <SFTPBrowser
-            sessionID={activeSessionID}
-            onClose={handleClosePanel}
-          />
+          <SFTPBrowser sessionID={activeSessionID} onClose={handleClosePanel} />
         </div>
+      )}
+
+      {showForm && (
+        <HostForm host={editingHost} onDone={handleFormDone} onCancel={handleFormCancel} />
       )}
     </div>
   )

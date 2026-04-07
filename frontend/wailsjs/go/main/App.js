@@ -97,3 +97,19 @@ export function DeleteSSHKey(arg1) {
 export function GetPublicKey(arg1) {
   return window['go']['main']['App']['GetPublicKey'](arg1);
 }
+
+export function CreateHostWithPassword(arg1, arg2) {
+  return window['go']['main']['App']['CreateHostWithPassword'](arg1, arg2);
+}
+
+export function CreateHostWithKey(arg1, arg2) {
+  return window['go']['main']['App']['CreateHostWithKey'](arg1, arg2);
+}
+
+export function UpdateHostWithPassword(arg1, arg2) {
+  return window['go']['main']['App']['UpdateHostWithPassword'](arg1, arg2);
+}
+
+export function UpdateHostWithKey(arg1, arg2) {
+  return window['go']['main']['App']['UpdateHostWithKey'](arg1, arg2);
+}

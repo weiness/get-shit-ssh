@@ -1,7 +1,8 @@
 import { create } from 'zustand'
+import * as App from '../../wailsjs/go/main/App'
 
 export interface Session {
-  id: string // sessionID (== hostID)
+  id: string
   hostName: string
   termID: string
   status: 'connecting' | 'connected' | 'disconnected'
@@ -22,33 +23,23 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
   connect: async (hostID, hostName) => {
     set((state) => ({
       sessions: new Map(state.sessions).set(hostID, {
-        id: hostID,
-        hostName,
-        termID: '',
-        status: 'connecting',
+        id: hostID, hostName, termID: '', status: 'connecting',
       }),
     }))
-
     try {
-      const sessionID = await window.App.SSHConnect(hostID)
-
+      const sessionID = await App.SSHConnect(hostID)
       set((state) => {
         const sessions = new Map(state.sessions)
         const session = sessions.get(hostID)
-        if (session) {
-          sessions.set(hostID, { ...session, id: sessionID, status: 'connected' })
-        }
+        if (session) sessions.set(hostID, { ...session, id: sessionID, status: 'connected' })
         return { sessions }
       })
-
       return sessionID
     } catch (error) {
       set((state) => {
         const sessions = new Map(state.sessions)
         const session = sessions.get(hostID)
-        if (session) {
-          sessions.set(hostID, { ...session, status: 'disconnected' })
-        }
+        if (session) sessions.set(hostID, { ...session, status: 'disconnected' })
         return { sessions }
       })
       throw error
@@ -56,47 +47,30 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
   },
 
   openTerminal: async (sessionID, rows, cols) => {
-    try {
-      const termID = await window.App.OpenTerminal(sessionID, rows, cols)
-
-      set((state) => {
-        const sessions = new Map(state.sessions)
-        const session = sessions.get(sessionID)
-        if (session) {
-          sessions.set(sessionID, { ...session, termID })
-        }
-        return { sessions }
-      })
-
-      return termID
-    } catch (error) {
-      console.error('Failed to open terminal:', error)
-      throw error
-    }
+    const termID = await App.OpenTerminal(sessionID, rows, cols)
+    set((state) => {
+      const sessions = new Map(state.sessions)
+      const session = sessions.get(sessionID)
+      if (session) sessions.set(sessionID, { ...session, termID })
+      return { sessions }
+    })
+    return termID
   },
 
   closeTerminal: async (termID) => {
-    try {
-      await window.App.TerminalClose(termID)
-    } catch (error) {
-      console.error('Failed to close terminal:', error)
-    }
+    try { await App.TerminalClose(termID) } catch { /* best-effort */ }
   },
 
   disconnect: async (sessionID) => {
     try {
-      await window.App.SSHDisconnect(sessionID)
+      await App.SSHDisconnect(sessionID)
       set((state) => {
         const sessions = new Map(state.sessions)
         sessions.delete(sessionID)
         return { sessions }
       })
-    } catch (error) {
-      console.error('Failed to disconnect:', error)
-    }
+    } catch { /* best-effort */ }
   },
 
-  getSession: (sessionID) => {
-    return get().sessions.get(sessionID)
-  },
+  getSession: (sessionID) => get().sessions.get(sessionID),
 }))

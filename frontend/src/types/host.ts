@@ -1,13 +1,12 @@
 export interface Host {
   id: string
   name: string
+  groupName: string
   host: string
   port: number
   username: string
-  password?: Uint8Array // encrypted
-  privateKey?: Uint8Array // encrypted
-  passphrase?: Uint8Array // encrypted
-  tags?: string[]
+  authType: 'password' | 'key' | ''
+  keyId: string
   createdAt: number
   updatedAt: number
 }

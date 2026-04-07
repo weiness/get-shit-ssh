@@ -37,3 +37,8 @@ export function ImportSSHKey(arg1:string,arg2:string):Promise<string>;
 export function ListSSHKeys():Promise<Array<store.KeyInfo>>;
 export function DeleteSSHKey(arg1:string):Promise<void>;
 export function GetPublicKey(arg1:string):Promise<string>;
+
+export function CreateHostWithPassword(arg1:store.Host,arg2:string):Promise<void>;
+export function CreateHostWithKey(arg1:store.Host,arg2:string):Promise<void>;
+export function UpdateHostWithPassword(arg1:store.Host,arg2:string):Promise<void>;
+export function UpdateHostWithKey(arg1:store.Host,arg2:string):Promise<void>;

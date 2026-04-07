@@ -47,17 +47,17 @@ export namespace store {
 	}
 
 	export class Host {
-	    ID: string;
-	    Name: string;
-	    GroupName: string;
-	    Host: string;
-	    Port: number;
-	    Username: string;
-	    AuthType: string;
-	    Secret: number[];
-	    KeyID: string;
-	    CreatedAt: number;
-	    UpdatedAt: number;
+	    id: string;
+	    name: string;
+	    groupName: string;
+	    host: string;
+	    port: number;
+	    username: string;
+	    authType: string;
+	    secret: number[];
+	    keyId: string;
+	    createdAt: number;
+	    updatedAt: number;
 
 	    static createFrom(source: any = {}) {
 	        return new Host(source);
@@ -65,17 +65,17 @@ export namespace store {
 
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.ID = source["ID"];
-	        this.Name = source["Name"];
-	        this.GroupName = source["GroupName"];
-	        this.Host = source["Host"];
-	        this.Port = source["Port"];
-	        this.Username = source["Username"];
-	        this.AuthType = source["AuthType"];
-	        this.Secret = source["Secret"];
-	        this.KeyID = source["KeyID"];
-	        this.CreatedAt = source["CreatedAt"];
-	        this.UpdatedAt = source["UpdatedAt"];
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.groupName = source["groupName"];
+	        this.host = source["host"];
+	        this.port = source["port"];
+	        this.username = source["username"];
+	        this.authType = source["authType"];
+	        this.secret = source["secret"];
+	        this.keyId = source["keyId"];
+	        this.createdAt = source["createdAt"];
+	        this.updatedAt = source["updatedAt"];
 	    }
 	}
 
