@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"sync"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -108,18 +109,22 @@ func (a *App) SSHDisconnect(sessionID string) error {
 
 // OpenTerminal opens a PTY terminal on an existing SSH session
 func (a *App) OpenTerminal(sessionID string, rows, cols uint32) (string, error) {
+	log.Printf("[OpenTerminal] Opening terminal for session %s, size %dx%d", sessionID, rows, cols)
 	sess, ok := a.sshMgr.Get(sessionID)
 	if !ok {
+		log.Printf("[OpenTerminal] Session not found: %s", sessionID)
 		return "", errors.New("session not found")
 	}
 
 	termSess, err := ssh.OpenTerminal(sess, rows, cols)
 	if err != nil {
+		log.Printf("[OpenTerminal] Failed to open terminal: %v", err)
 		return "", fmt.Errorf("failed to open terminal: %w", err)
 	}
 
 	termID := termSess.ID()
 	a.terminals.Store(termID, termSess)
+	log.Printf("[OpenTerminal] Terminal opened successfully, termID: %s", termID)
 
 	// Start goroutine to pump terminal output to frontend
 	go a.pumpTerminalOutput(termID, termSess)
@@ -164,13 +169,17 @@ func (a *App) TerminalClose(termID string) error {
 // pumpTerminalOutput continuously reads from terminal's output channel and emits to frontend
 func (a *App) pumpTerminalOutput(termID string, t *ssh.TerminalSession) {
 	defer func() {
+		log.Printf("[pumpTerminalOutput] Terminal %s closed, cleaning up", termID)
 		a.terminals.Delete(termID)
 		runtime.EventsEmit(a.ctx, "terminal:closed", termID)
 	}()
 
+	log.Printf("[pumpTerminalOutput] Started pumping for terminal %s", termID)
 	for data := range t.ReadChan() {
+		log.Printf("[pumpTerminalOutput] Emitting %d bytes for terminal %s", len(data), termID)
 		runtime.EventsEmit(a.ctx, "terminal:data:"+termID, data)
 	}
+	log.Printf("[pumpTerminalOutput] ReadChan closed for terminal %s", termID)
 }
 
 // SFTPOpen opens an SFTP subsystem on an existing SSH session and returns an sftpID
@@ -400,6 +409,63 @@ func (a *App) UpdateHostWithKey(h *store.Host, keyID string) error {
 // encryptKey is a thin wrapper so we can test without importing crypto directly.
 func encryptKey(encKey, plaintext []byte) ([]byte, error) {
 	return crypto.Encrypt(encKey, plaintext)
+}
+
+// TestConnection tests SSH connectivity with raw credentials without saving.
+// authType must be "password" or "key". For password, pass plaintext in secret.
+// For key auth, pass the keyID in secret.
+func (a *App) TestConnection(host, username string, port int, authType, secret string) error {
+	h := &store.Host{
+		Host:     host,
+		Port:     port,
+		Username: username,
+		AuthType: authType,
+	}
+
+	var encSecret []byte
+	var err error
+
+	switch authType {
+	case "password":
+		encSecret, err = crypto.Encrypt(a.encKey, []byte(secret))
+		if err != nil {
+			return fmt.Errorf("encrypt: %w", err)
+		}
+	case "key":
+		_, encPriv, err := a.db.GetKey(secret)
+		if err != nil {
+			return fmt.Errorf("get key: %w", err)
+		}
+		if encPriv == nil {
+			return errors.New("key not found")
+		}
+		encSecret = encPriv
+	default:
+		return fmt.Errorf("unknown auth type: %s", authType)
+	}
+
+	h.Secret = encSecret
+	sessionID, err := a.sshMgr.Connect(h)
+	if err != nil {
+		return err
+	}
+	_ = a.sshMgr.Close(sessionID)
+	return nil
+}
+
+// OpenFilePickerDialog opens a native file-open dialog and returns the selected path.
+func (a *App) OpenFilePickerDialog(title string) (string, error) {
+	return runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: title,
+	})
+}
+
+// SaveFilePickerDialog opens a native save dialog and returns the chosen destination path.
+func (a *App) SaveFilePickerDialog(title, defaultFilename string) (string, error) {
+	return runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+		Title:           title,
+		DefaultFilename: defaultFilename,
+	})
 }
 
 // ListSessionLogs returns recent session history (up to 100 entries).

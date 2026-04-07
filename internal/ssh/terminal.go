@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"sync"
 
 	gossh "golang.org/x/crypto/ssh"
@@ -81,21 +82,26 @@ func (t *TerminalSession) Close() error {
 func readerLoop(stdout io.Reader, outCh chan []byte, done <-chan struct{}) {
 	defer close(outCh)
 
+	log.Printf("[readerLoop] Started reading from stdout")
 	buf := make([]byte, 4096)
 	for {
 		n, err := stdout.Read(buf)
 		if n > 0 {
+			log.Printf("[readerLoop] Read %d bytes from stdout", n)
 			// Copy data to avoid buffer reuse issues
 			chunk := make([]byte, n)
 			copy(chunk, buf[:n])
 
 			select {
 			case outCh <- chunk:
+				log.Printf("[readerLoop] Sent %d bytes to outCh", n)
 			case <-done:
+				log.Printf("[readerLoop] Done signal received, exiting")
 				return
 			}
 		}
 		if err != nil {
+			log.Printf("[readerLoop] Read error: %v, exiting", err)
 			// EOF or other error, exit reader
 			return
 		}
@@ -108,6 +114,8 @@ func OpenTerminal(sess *Session, rows, cols uint32) (*TerminalSession, error) {
 		return nil, errors.New("session is nil")
 	}
 
+	log.Printf("[OpenTerminal] Opening terminal for session %s, size %dx%d", sess.ID(), rows, cols)
+
 	// Get the underlying SSH client
 	client := sess.Client()
 	if client == nil {
@@ -117,6 +125,7 @@ func OpenTerminal(sess *Session, rows, cols uint32) (*TerminalSession, error) {
 	// Open a new SSH session
 	sshSess, err := client.NewSession()
 	if err != nil {
+		log.Printf("[OpenTerminal] Failed to create SSH session: %v", err)
 		return nil, fmt.Errorf("failed to open new session: %w", err)
 	}
 
@@ -128,6 +137,7 @@ func OpenTerminal(sess *Session, rows, cols uint32) (*TerminalSession, error) {
 	})
 	if err != nil {
 		sshSess.Close()
+		log.Printf("[OpenTerminal] Failed to request PTY: %v", err)
 		return nil, fmt.Errorf("failed to request PTY: %w", err)
 	}
 
@@ -135,6 +145,7 @@ func OpenTerminal(sess *Session, rows, cols uint32) (*TerminalSession, error) {
 	stdin, err := sshSess.StdinPipe()
 	if err != nil {
 		sshSess.Close()
+		log.Printf("[OpenTerminal] Failed to get stdin pipe: %v", err)
 		return nil, fmt.Errorf("failed to get stdin pipe: %w", err)
 	}
 
@@ -142,6 +153,7 @@ func OpenTerminal(sess *Session, rows, cols uint32) (*TerminalSession, error) {
 	stdout, err := sshSess.StdoutPipe()
 	if err != nil {
 		sshSess.Close()
+		log.Printf("[OpenTerminal] Failed to get stdout pipe: %v", err)
 		return nil, fmt.Errorf("failed to get stdout pipe: %w", err)
 	}
 
@@ -149,8 +161,11 @@ func OpenTerminal(sess *Session, rows, cols uint32) (*TerminalSession, error) {
 	err = sshSess.Shell()
 	if err != nil {
 		sshSess.Close()
+		log.Printf("[OpenTerminal] Failed to start shell: %v", err)
 		return nil, fmt.Errorf("failed to start shell: %w", err)
 	}
+
+	log.Printf("[OpenTerminal] Shell started successfully")
 
 	// Create terminal session
 	termSess := &TerminalSession{
@@ -164,5 +179,6 @@ func OpenTerminal(sess *Session, rows, cols uint32) (*TerminalSession, error) {
 	// Start reader goroutine
 	go readerLoop(stdout, termSess.outCh, termSess.done)
 
+	log.Printf("[OpenTerminal] Terminal session created with ID: %s", termSess.id)
 	return termSess, nil
 }

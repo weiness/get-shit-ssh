@@ -14,30 +14,32 @@ export function TerminalPane({ termID, visible }: TerminalPaneProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const termRef = useRef<Terminal | null>(null)
   const fitAddonRef = useRef<FitAddon | null>(null)
-  const [initialized, setInitialized] = useState(false)
+  const [term, setTerm] = useState<Terminal | null>(null)
 
-  const { resize } = useTerminalIO(termID, termRef.current)
+  const { resize } = useTerminalIO(termID, term)
 
   useEffect(() => {
-    if (!containerRef.current || initialized) return
+    if (!containerRef.current || term) return
 
-    const term = new Terminal({
+    const terminal = new Terminal({
       fontSize: 13,
       fontFamily: 'Menlo, Monaco, "Courier New", monospace',
       theme: {
         background: '#1e1e2e',
         foreground: '#cdd6f4',
       },
+      cursorBlink: true,
     })
 
     const fitAddon = new FitAddon()
-    term.loadAddon(fitAddon)
-    term.open(containerRef.current)
+    terminal.loadAddon(fitAddon)
+    terminal.open(containerRef.current)
     fitAddon.fit()
+    terminal.focus()
 
-    termRef.current = term
+    termRef.current = terminal
     fitAddonRef.current = fitAddon
-    setInitialized(true)
+    setTerm(terminal)
 
     const handleResize = () => {
       if (fitAddonRef.current && termRef.current) {
@@ -49,25 +51,27 @@ export function TerminalPane({ termID, visible }: TerminalPaneProps) {
 
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
-  }, [initialized, resize])
+  }, [term, resize])
 
-  // Fit when becoming visible
+  // Fit and focus when becoming visible
   useEffect(() => {
-    if (visible && initialized && fitAddonRef.current && termRef.current) {
+    if (visible && term && fitAddonRef.current) {
       setTimeout(() => {
         fitAddonRef.current?.fit()
         if (termRef.current) {
           const { cols, rows } = termRef.current
           resize(rows, cols)
+          termRef.current.focus()
         }
       }, 50)
     }
-  }, [visible, initialized, resize])
+  }, [visible, term, resize])
 
   return (
     <div
       className={styles.container}
       style={{ display: visible ? 'flex' : 'none' }}
+      onClick={() => termRef.current?.focus()}
     >
       <div ref={containerRef} className={styles.terminalContainer} />
     </div>
