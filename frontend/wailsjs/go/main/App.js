@@ -14,6 +14,66 @@ export function ListHosts() {
   return window['go']['main']['App']['ListHosts']();
 }
 
+export function OpenTerminal(arg1, arg2, arg3) {
+  return window['go']['main']['App']['OpenTerminal'](arg1, arg2, arg3);
+}
+
+export function SSHConnect(arg1) {
+  return window['go']['main']['App']['SSHConnect'](arg1);
+}
+
+export function SSHDisconnect(arg1) {
+  return window['go']['main']['App']['SSHDisconnect'](arg1);
+}
+
+export function TerminalClose(arg1) {
+  return window['go']['main']['App']['TerminalClose'](arg1);
+}
+
+export function TerminalInput(arg1, arg2) {
+  return window['go']['main']['App']['TerminalInput'](arg1, arg2);
+}
+
+export function TerminalResize(arg1, arg2, arg3) {
+  return window['go']['main']['App']['TerminalResize'](arg1, arg2, arg3);
+}
+
 export function UpdateHost(arg1) {
   return window['go']['main']['App']['UpdateHost'](arg1);
+}
+
+export function SFTPOpen(arg1) {
+  return window['go']['main']['App']['SFTPOpen'](arg1);
+}
+
+export function SFTPClose(arg1) {
+  return window['go']['main']['App']['SFTPClose'](arg1);
+}
+
+export function SFTPListDir(arg1, arg2) {
+  return window['go']['main']['App']['SFTPListDir'](arg1, arg2);
+}
+
+export function SFTPGetwd(arg1) {
+  return window['go']['main']['App']['SFTPGetwd'](arg1);
+}
+
+export function SFTPDownload(arg1, arg2, arg3) {
+  return window['go']['main']['App']['SFTPDownload'](arg1, arg2, arg3);
+}
+
+export function SFTPUpload(arg1, arg2, arg3) {
+  return window['go']['main']['App']['SFTPUpload'](arg1, arg2, arg3);
+}
+
+export function SFTPDelete(arg1, arg2) {
+  return window['go']['main']['App']['SFTPDelete'](arg1, arg2);
+}
+
+export function SFTPRename(arg1, arg2, arg3) {
+  return window['go']['main']['App']['SFTPRename'](arg1, arg2, arg3);
+}
+
+export function SFTPMkdir(arg1, arg2) {
+  return window['go']['main']['App']['SFTPMkdir'](arg1, arg2);
 }

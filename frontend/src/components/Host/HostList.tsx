@@ -5,7 +5,10 @@ import { Host } from '../../types/host'
 import { HostForm } from './HostForm'
 import { HostItem } from './HostItem'
 import { TerminalPane } from '../Terminal/TerminalPane'
+import { SFTPBrowser } from '../FileManager/SFTPBrowser'
 import { Plus } from 'lucide-react'
+
+type PanelMode = 'terminal' | 'sftp' | null
 
 export function HostList() {
   const { hosts, fetchHosts, addHost, updateHost, removeHost } = useHostStore()
@@ -13,6 +16,8 @@ export function HostList() {
   const [editingHost, setEditingHost] = useState<Host | undefined>()
   const [showForm, setShowForm] = useState(false)
   const [activeTerminal, setActiveTerminal] = useState<string | null>(null)
+  const [activeSessionID, setActiveSessionID] = useState<string | null>(null)
+  const [panelMode, setPanelMode] = useState<PanelMode>(null)
   const [connecting, setConnecting] = useState(false)
 
   useEffect(() => {
@@ -45,17 +50,37 @@ export function HostList() {
       const sessionID = await connect(hostID, hostName)
       const termID = await openTerminal(sessionID, 24, 80)
       setActiveTerminal(termID)
+      setActiveSessionID(sessionID)
+      setPanelMode('terminal')
     } catch (error) {
-      console.error('Failed to connect:', error)
-      alert('连接失败: ' + (error instanceof Error ? error.message : '未知错误'))
+      alert('连接失败: ' + (error instanceof Error ? error.message : String(error)))
     } finally {
       setConnecting(false)
     }
   }
 
+  const handleFiles = async (hostID: string, hostName: string) => {
+    setConnecting(true)
+    try {
+      const sessionID = await connect(hostID, hostName)
+      setActiveSessionID(sessionID)
+      setPanelMode('sftp')
+    } catch (error) {
+      alert('连接失败: ' + (error instanceof Error ? error.message : String(error)))
+    } finally {
+      setConnecting(false)
+    }
+  }
+
+  const handleClosePanel = () => {
+    setPanelMode(null)
+    setActiveTerminal(null)
+    setActiveSessionID(null)
+  }
+
   return (
     <div className="flex h-full">
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-6 min-w-0">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">主机管理</h1>
           <button
@@ -81,6 +106,7 @@ export function HostList() {
                 onEdit={handleEdit}
                 onDelete={removeHost}
                 onConnect={handleConnect}
+                onFiles={handleFiles}
               />
             ))
           )}
@@ -91,11 +117,20 @@ export function HostList() {
         )}
       </div>
 
-      {activeTerminal && (
+      {panelMode === 'terminal' && activeTerminal && (
         <div className="w-1/2 border-l border-gray-300 dark:border-gray-600">
           <TerminalPane
             termID={activeTerminal}
-            onClose={() => setActiveTerminal(null)}
+            onClose={handleClosePanel}
+          />
+        </div>
+      )}
+
+      {panelMode === 'sftp' && activeSessionID && (
+        <div className="w-1/2 border-l border-gray-300 dark:border-gray-600">
+          <SFTPBrowser
+            sessionID={activeSessionID}
+            onClose={handleClosePanel}
           />
         </div>
       )}

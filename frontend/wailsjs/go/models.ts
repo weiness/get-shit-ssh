@@ -1,3 +1,30 @@
+export namespace ssh {
+
+	export class FileInfo {
+		name: string;
+		path: string;
+		size: number;
+		mode: string;
+		isDir: boolean;
+		modTime: number;
+
+		static createFrom(source: any = {}) {
+			return new FileInfo(source);
+		}
+
+		constructor(source: any = {}) {
+			if ('string' === typeof source) source = JSON.parse(source);
+			this.name = source["name"];
+			this.path = source["path"];
+			this.size = source["size"];
+			this.mode = source["mode"];
+			this.isDir = source["isDir"];
+			this.modTime = source["modTime"];
+		}
+	}
+
+}
+
 export namespace store {
 	
 	export class Host {

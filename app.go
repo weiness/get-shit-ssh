@@ -16,6 +16,7 @@ type App struct {
 	db        *store.DB
 	sshMgr    *ssh.Manager
 	terminals sync.Map // termID string -> *ssh.TerminalSession
+	sftpSess  sync.Map // sftpID string -> *ssh.SFTPSession
 	encKey    []byte
 }
 
@@ -159,4 +160,93 @@ func (a *App) pumpTerminalOutput(termID string, t *ssh.TerminalSession) {
 	for data := range t.ReadChan() {
 		runtime.EventsEmit(a.ctx, "terminal:data:"+termID, data)
 	}
+}
+
+// SFTPOpen opens an SFTP subsystem on an existing SSH session and returns an sftpID
+func (a *App) SFTPOpen(sessionID string) (string, error) {
+	sess, ok := a.sshMgr.Get(sessionID)
+	if !ok {
+		return "", errors.New("session not found")
+	}
+
+	sftpSess, err := ssh.OpenSFTP(sess)
+	if err != nil {
+		return "", fmt.Errorf("failed to open SFTP: %w", err)
+	}
+
+	sftpID := sftpSess.ID()
+	a.sftpSess.Store(sftpID, sftpSess)
+	return sftpID, nil
+}
+
+// SFTPClose closes an SFTP session
+func (a *App) SFTPClose(sftpID string) error {
+	val, ok := a.sftpSess.LoadAndDelete(sftpID)
+	if !ok {
+		return errors.New("sftp session not found")
+	}
+	return val.(*ssh.SFTPSession).Close()
+}
+
+// SFTPListDir lists a remote directory
+func (a *App) SFTPListDir(sftpID, remotePath string) ([]*ssh.FileInfo, error) {
+	val, ok := a.sftpSess.Load(sftpID)
+	if !ok {
+		return nil, errors.New("sftp session not found")
+	}
+	return val.(*ssh.SFTPSession).ListDir(remotePath)
+}
+
+// SFTPGetwd returns the remote working directory
+func (a *App) SFTPGetwd(sftpID string) (string, error) {
+	val, ok := a.sftpSess.Load(sftpID)
+	if !ok {
+		return "", errors.New("sftp session not found")
+	}
+	return val.(*ssh.SFTPSession).Getwd()
+}
+
+// SFTPDownload downloads a remote file to a local path
+func (a *App) SFTPDownload(sftpID, remotePath, localPath string) error {
+	val, ok := a.sftpSess.Load(sftpID)
+	if !ok {
+		return errors.New("sftp session not found")
+	}
+	return val.(*ssh.SFTPSession).Download(remotePath, localPath)
+}
+
+// SFTPUpload uploads a local file to a remote path
+func (a *App) SFTPUpload(sftpID, localPath, remotePath string) error {
+	val, ok := a.sftpSess.Load(sftpID)
+	if !ok {
+		return errors.New("sftp session not found")
+	}
+	return val.(*ssh.SFTPSession).Upload(localPath, remotePath)
+}
+
+// SFTPDelete removes a remote file
+func (a *App) SFTPDelete(sftpID, remotePath string) error {
+	val, ok := a.sftpSess.Load(sftpID)
+	if !ok {
+		return errors.New("sftp session not found")
+	}
+	return val.(*ssh.SFTPSession).Delete(remotePath)
+}
+
+// SFTPRename renames or moves a remote file
+func (a *App) SFTPRename(sftpID, oldPath, newPath string) error {
+	val, ok := a.sftpSess.Load(sftpID)
+	if !ok {
+		return errors.New("sftp session not found")
+	}
+	return val.(*ssh.SFTPSession).Rename(oldPath, newPath)
+}
+
+// SFTPMkdir creates a remote directory
+func (a *App) SFTPMkdir(sftpID, remotePath string) error {
+	val, ok := a.sftpSess.Load(sftpID)
+	if !ok {
+		return errors.New("sftp session not found")
+	}
+	return val.(*ssh.SFTPSession).Mkdir(remotePath)
 }
