@@ -262,25 +262,30 @@ func (a *App) SFTPMkdir(sftpID, remotePath string) error {
 	return val.(*ssh.SFTPSession).Mkdir(remotePath)
 }
 
+// GeneratedKey holds the result of a key generation operation.
+type GeneratedKey struct {
+	PublicKey string `json:"publicKey"`
+	KeyID     string `json:"keyId"`
+}
+
 // GenerateSSHKey generates an SSH key pair and stores it in the database.
 // algorithm must be "ed25519" or "ecdsa".
-// Returns the public key string and the new key ID.
-func (a *App) GenerateSSHKey(algorithm, name string) (string, string, error) {
+func (a *App) GenerateSSHKey(algorithm, name string) (*GeneratedKey, error) {
 	pubKey, privPEM, err := ssh.GenerateKey(algorithm)
 	if err != nil {
-		return "", "", fmt.Errorf("generate key: %w", err)
+		return nil, fmt.Errorf("generate key: %w", err)
 	}
 
 	encPriv, err := encryptKey(a.encKey, privPEM)
 	if err != nil {
-		return "", "", fmt.Errorf("encrypt private key: %w", err)
+		return nil, fmt.Errorf("encrypt private key: %w", err)
 	}
 
 	info, err := a.db.SaveKey(name, pubKey, encPriv)
 	if err != nil {
-		return "", "", fmt.Errorf("save key: %w", err)
+		return nil, fmt.Errorf("save key: %w", err)
 	}
-	return pubKey, info.ID, nil
+	return &GeneratedKey{PublicKey: pubKey, KeyID: info.ID}, nil
 }
 
 // ImportSSHKey imports a PEM-encoded private key and stores it in the database.

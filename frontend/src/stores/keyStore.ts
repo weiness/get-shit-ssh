@@ -37,10 +37,8 @@ export const useKeyStore = create<KeyStore>((set, get) => ({
 
   generateKey: async (algorithm, name) => {
     const result = await App.GenerateSSHKey(algorithm, name)
-    // Go returns (string, string, error) → Wails maps to [publicKey, keyID]
-    const [publicKey, keyID] = result as unknown as [string, string]
     await get().fetchKeys()
-    return { publicKey, keyID }
+    return { publicKey: result.publicKey, keyID: result.keyId }
   },
 
   importKey: async (pemData, name) => {
