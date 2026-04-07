@@ -1,13 +1,22 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import {
   Folder, File, ArrowUp, RefreshCw, Trash2,
   Download, Upload, FolderPlus, Pencil, X, Loader2,
 } from 'lucide-react'
-import { useFileStore, FileInfo } from '../../stores/fileStore'
+import * as App from '../../../wailsjs/go/main/App'
 
 interface SFTPBrowserProps {
   sessionID: string
   onClose: () => void
+}
+
+interface FileInfo {
+  name: string
+  path: string
+  size: number
+  mode: string
+  isDir: boolean
+  modTime: number
 }
 
 function formatSize(bytes: number): string {
@@ -28,10 +37,11 @@ function parentPath(p: string): string {
 }
 
 export function SFTPBrowser({ sessionID, onClose }: SFTPBrowserProps) {
-  const {
-    sftpID, currentPath, entries, loading, error,
-    openSFTP, closeSFTP, listDir, refresh, deleteFile, rename, mkdir,
-  } = useFileStore()
+  const [sftpID, setSftpID] = useState<string | null>(null)
+  const [currentPath, setCurrentPath] = useState('/')
+  const [entries, setEntries] = useState<FileInfo[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const [selected, setSelected] = useState<string | null>(null)
   const [renaming, setRenaming] = useState<string | null>(null)
@@ -40,38 +50,65 @@ export function SFTPBrowser({ sessionID, onClose }: SFTPBrowserProps) {
   const [mkdirValue, setMkdirValue] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Open SFTP on mount
-  useEffect(() => {
-    openSFTP(sessionID).catch(() => {})
-    return () => {
-      closeSFTP()
+  const sftpIDRef = useRef<string | null>(null)
+  sftpIDRef.current = sftpID
+
+  const listDir = useCallback(async (id: string, path: string) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const result = await App.SFTPListDir(id, path)
+      setEntries((result ?? []) as FileInfo[])
+      setCurrentPath(path)
+    } catch (e) {
+      setError(String(e))
+    } finally {
+      setLoading(false)
     }
-  }, [sessionID]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    let opened = ''
+    App.SFTPOpen(sessionID)
+      .then(async (id) => {
+        opened = id
+        setSftpID(id)
+        const wd = await App.SFTPGetwd(id)
+        await listDir(id, wd)
+      })
+      .catch((e) => setError(String(e)))
+
+    return () => {
+      if (opened) App.SFTPClose(opened).catch(() => {})
+    }
+  }, [sessionID, listDir])
+
+  const refresh = () => { if (sftpID) listDir(sftpID, currentPath) }
 
   const handleNavigate = (entry: FileInfo) => {
-    if (entry.isDir) {
+    if (entry.isDir && sftpID) {
       setSelected(null)
-      listDir(entry.path)
+      listDir(sftpID, entry.path)
     }
   }
 
   const handleUp = () => {
+    if (!sftpID) return
     const parent = parentPath(currentPath)
     if (parent !== currentPath) {
       setSelected(null)
-      listDir(parent)
+      listDir(sftpID, parent)
     }
   }
 
   const handleDelete = async () => {
-    if (!selected) return
+    if (!selected || !sftpID) return
     if (!confirm(`删除 ${selected}?`)) return
     try {
-      await deleteFile(selected)
+      await App.SFTPDelete(sftpID, selected)
       setSelected(null)
-    } catch (e) {
-      alert('删除失败: ' + e)
-    }
+      await listDir(sftpID, currentPath)
+    } catch (e) { alert('删除失败: ' + e) }
   }
 
   const handleRenameStart = () => {
@@ -81,54 +118,42 @@ export function SFTPBrowser({ sessionID, onClose }: SFTPBrowserProps) {
   }
 
   const handleRenameConfirm = async () => {
-    if (!renaming || !renameValue) return
+    if (!renaming || !renameValue || !sftpID) return
     const dir = renaming.split('/').slice(0, -1).join('/')
     const newPath = (dir || '') + '/' + renameValue
     try {
-      await rename(renaming, newPath)
+      await App.SFTPRename(sftpID, renaming, newPath)
       setRenaming(null)
       setSelected(newPath)
-    } catch (e) {
-      alert('重命名失败: ' + e)
-    }
+      await listDir(sftpID, currentPath)
+    } catch (e) { alert('重命名失败: ' + e) }
   }
 
   const handleMkdir = async () => {
-    if (!mkdirValue.trim()) return
+    if (!mkdirValue.trim() || !sftpID) return
     const newDir = currentPath.replace(/\/+$/, '') + '/' + mkdirValue.trim()
     try {
-      await mkdir(newDir)
+      await App.SFTPMkdir(sftpID, newDir)
       setMkdirMode(false)
       setMkdirValue('')
-    } catch (e) {
-      alert('创建目录失败: ' + e)
-    }
+      await listDir(sftpID, currentPath)
+    } catch (e) { alert('创建目录失败: ' + e) }
   }
 
   const handleDownload = () => {
-    if (!selected) return
+    if (!selected || !sftpID) return
     const filename = selected.split('/').pop() ?? 'file'
-    // Prompt user for local save path (simplified: use Downloads dir)
-    const localPath = filename
-    useFileStore.getState().download(selected, localPath).catch((e) => alert('下载失败: ' + e))
-  }
-
-  const handleUploadClick = () => {
-    fileInputRef.current?.click()
+    App.SFTPDownload(sftpID, selected, filename).catch((e) => alert('下载失败: ' + e))
   }
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file) return
+    if (!file || !sftpID) return
     const remotePath = currentPath.replace(/\/+$/, '') + '/' + file.name
-    // In Wails, we get the file path from the file input's webkitRelativePath or name
-    // For desktop apps, we use the actual path - Wails file dialogs would be ideal here
-    // For now we use the file name as a best-effort path indicator
     try {
-      await useFileStore.getState().upload((file as any).path ?? file.name, remotePath)
-    } catch (e) {
-      alert('上传失败: ' + e)
-    }
+      await App.SFTPUpload(sftpID, (file as any).path ?? file.name, remotePath)
+      await listDir(sftpID, currentPath)
+    } catch (e) { alert('上传失败: ' + e) }
     e.target.value = ''
   }
 
@@ -146,76 +171,48 @@ export function SFTPBrowser({ sessionID, onClose }: SFTPBrowserProps) {
 
       {/* Toolbar */}
       <div className="flex items-center gap-1 px-2 py-1.5 border-b border-gray-200 dark:border-gray-700">
-        <button
-          onClick={handleUp}
-          disabled={!sftpID || currentPath === '/'}
-          title="上级目录"
-          className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40"
-        >
+        <button onClick={handleUp} disabled={!sftpID || currentPath === '/'} title="上级目录"
+          className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40">
           <ArrowUp size={15} />
         </button>
-        <button
-          onClick={refresh}
-          disabled={!sftpID || loading}
-          title="刷新"
-          className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40"
-        >
+        <button onClick={refresh} disabled={!sftpID || loading} title="刷新"
+          className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40">
           <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
         </button>
         <div className="w-px h-4 bg-gray-200 dark:bg-gray-600 mx-1" />
-        <button
-          onClick={handleDownload}
-          disabled={!selected}
-          title="下载"
-          className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40"
-        >
+        <button onClick={handleDownload} disabled={!selected} title="下载"
+          className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40">
           <Download size={15} />
         </button>
-        <button
-          onClick={handleUploadClick}
-          disabled={!sftpID}
-          title="上传"
-          className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40"
-        >
+        <button onClick={() => fileInputRef.current?.click()} disabled={!sftpID} title="上传"
+          className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40">
           <Upload size={15} />
         </button>
         <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} />
-        <button
-          onClick={() => { setMkdirMode(true); setMkdirValue('') }}
-          disabled={!sftpID}
-          title="新建文件夹"
-          className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40"
-        >
+        <button onClick={() => { setMkdirMode(true); setMkdirValue('') }} disabled={!sftpID} title="新建文件夹"
+          className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40">
           <FolderPlus size={15} />
         </button>
         <div className="w-px h-4 bg-gray-200 dark:bg-gray-600 mx-1" />
-        <button
-          onClick={handleRenameStart}
-          disabled={!selected}
-          title="重命名"
-          className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40"
-        >
+        <button onClick={handleRenameStart} disabled={!selected} title="重命名"
+          className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40">
           <Pencil size={15} />
         </button>
-        <button
-          onClick={handleDelete}
-          disabled={!selected}
-          title="删除"
-          className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 text-red-500"
-        >
+        <button onClick={handleDelete} disabled={!selected} title="删除"
+          className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 text-red-500">
           <Trash2 size={15} />
         </button>
       </div>
 
       {/* Breadcrumb */}
       <div className="flex items-center gap-1 px-3 py-1 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800 overflow-x-auto">
-        <button onClick={() => listDir('/')} className="hover:text-blue-500">/</button>
+        <button onClick={() => sftpID && listDir(sftpID, '/')} className="hover:text-blue-500">/</button>
         {breadcrumbs.map((seg, i) => {
           const path = '/' + breadcrumbs.slice(0, i + 1).join('/')
           return (
             <span key={path} className="flex items-center gap-1">
               <span>/</span>
-              <button onClick={() => listDir(path)} className="hover:text-blue-500 whitespace-nowrap">
+              <button onClick={() => sftpID && listDir(sftpID, path)} className="hover:text-blue-500 whitespace-nowrap">
                 {seg}
               </button>
             </span>

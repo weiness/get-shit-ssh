@@ -5,20 +5,25 @@ import { Host } from '../../types/host'
 import { HostForm } from './HostForm'
 import { HostItem } from './HostItem'
 import { TerminalPane } from '../Terminal/TerminalPane'
+import { TerminalTabBar, TermTab } from '../Terminal/TerminalTabBar'
 import { SFTPBrowser } from '../FileManager/SFTPBrowser'
 import { Plus } from 'lucide-react'
 
-type PanelMode = 'terminal' | 'sftp' | null
+type RightPanel = { type: 'sftp'; sessionID: string } | null
 
 export function HostList() {
   const { hosts, fetchHosts, removeHost } = useHostStore()
-  const { connect, openTerminal } = useSessionStore()
+  const { connect, openTerminal, closeTerminal, disconnect } = useSessionStore()
   const [editingHost, setEditingHost] = useState<Host | undefined>()
   const [showForm, setShowForm] = useState(false)
-  const [activeTerminal, setActiveTerminal] = useState<string | null>(null)
-  const [activeSessionID, setActiveSessionID] = useState<string | null>(null)
-  const [panelMode, setPanelMode] = useState<PanelMode>(null)
   const [connecting, setConnecting] = useState(false)
+
+  // Multi-tab terminal state
+  const [tabs, setTabs] = useState<TermTab[]>([])
+  const [activeTermID, setActiveTermID] = useState<string | null>(null)
+
+  // SFTP panel (replaces all tabs when open)
+  const [sftpPanel, setSftpPanel] = useState<RightPanel>(null)
 
   useEffect(() => { fetchHosts() }, [fetchHosts])
 
@@ -33,19 +38,15 @@ export function HostList() {
     fetchHosts()
   }
 
-  const handleFormCancel = () => {
-    setShowForm(false)
-    setEditingHost(undefined)
-  }
-
   const handleConnect = async (hostID: string, hostName: string) => {
     setConnecting(true)
     try {
       const sessionID = await connect(hostID, hostName)
       const termID = await openTerminal(sessionID, 24, 80)
-      setActiveTerminal(termID)
-      setActiveSessionID(sessionID)
-      setPanelMode('terminal')
+      const newTab: TermTab = { termID, sessionID, hostName }
+      setTabs((prev) => [...prev, newTab])
+      setActiveTermID(termID)
+      setSftpPanel(null)
     } catch (error) {
       alert('连接失败: ' + (error instanceof Error ? error.message : String(error)))
     } finally {
@@ -57,8 +58,7 @@ export function HostList() {
     setConnecting(true)
     try {
       const sessionID = await connect(hostID, hostName)
-      setActiveSessionID(sessionID)
-      setPanelMode('sftp')
+      setSftpPanel({ type: 'sftp', sessionID })
     } catch (error) {
       alert('连接失败: ' + (error instanceof Error ? error.message : String(error)))
     } finally {
@@ -66,14 +66,25 @@ export function HostList() {
     }
   }
 
-  const handleClosePanel = () => {
-    setPanelMode(null)
-    setActiveTerminal(null)
-    setActiveSessionID(null)
+  const handleTabClose = async (termID: string, sessionID: string) => {
+    await closeTerminal(termID)
+    await disconnect(sessionID)
+    setTabs((prev) => {
+      const next = prev.filter((t) => t.termID !== termID)
+      if (activeTermID === termID) {
+        setActiveTermID(next.length > 0 ? next[next.length - 1].termID : null)
+      }
+      return next
+    })
   }
+
+  const handleSftpClose = () => setSftpPanel(null)
+
+  const showRightPanel = tabs.length > 0 || sftpPanel !== null
 
   return (
     <div className="flex h-full">
+      {/* Left: host list */}
       <div className="flex-1 overflow-y-auto p-6 min-w-0">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">主机管理</h1>
@@ -107,20 +118,37 @@ export function HostList() {
         </div>
       </div>
 
-      {panelMode === 'terminal' && activeTerminal && (
-        <div className="w-1/2 border-l border-gray-300 dark:border-gray-600">
-          <TerminalPane termID={activeTerminal} onClose={handleClosePanel} />
-        </div>
-      )}
-
-      {panelMode === 'sftp' && activeSessionID && (
-        <div className="w-1/2 border-l border-gray-300 dark:border-gray-600">
-          <SFTPBrowser sessionID={activeSessionID} onClose={handleClosePanel} />
+      {/* Right: terminal tabs or SFTP */}
+      {showRightPanel && (
+        <div className="w-1/2 border-l border-gray-300 dark:border-gray-600 flex flex-col">
+          {sftpPanel ? (
+            <SFTPBrowser sessionID={sftpPanel.sessionID} onClose={handleSftpClose} />
+          ) : (
+            <>
+              <TerminalTabBar
+                tabs={tabs}
+                activeTermID={activeTermID}
+                onSelect={setActiveTermID}
+                onClose={handleTabClose}
+              />
+              <div className="flex-1 relative overflow-hidden">
+                {tabs.map((tab) => (
+                  <div
+                    key={tab.termID}
+                    className="absolute inset-0"
+                    style={{ display: tab.termID === activeTermID ? 'block' : 'none' }}
+                  >
+                    <TerminalPane termID={tab.termID} visible={tab.termID === activeTermID} />
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 
       {showForm && (
-        <HostForm host={editingHost} onDone={handleFormDone} onCancel={handleFormCancel} />
+        <HostForm host={editingHost} onDone={handleFormDone} onCancel={() => { setShowForm(false); setEditingHost(undefined) }} />
       )}
     </div>
   )
