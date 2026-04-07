@@ -77,3 +77,23 @@ export function SFTPRename(arg1, arg2, arg3) {
 export function SFTPMkdir(arg1, arg2) {
   return window['go']['main']['App']['SFTPMkdir'](arg1, arg2);
 }
+
+export function GenerateSSHKey(arg1, arg2) {
+  return window['go']['main']['App']['GenerateSSHKey'](arg1, arg2);
+}
+
+export function ImportSSHKey(arg1, arg2) {
+  return window['go']['main']['App']['ImportSSHKey'](arg1, arg2);
+}
+
+export function ListSSHKeys() {
+  return window['go']['main']['App']['ListSSHKeys']();
+}
+
+export function DeleteSSHKey(arg1) {
+  return window['go']['main']['App']['DeleteSSHKey'](arg1);
+}
+
+export function GetPublicKey(arg1) {
+  return window['go']['main']['App']['GetPublicKey'](arg1);
+}

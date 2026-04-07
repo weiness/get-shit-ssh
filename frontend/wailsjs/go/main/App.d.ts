@@ -31,3 +31,9 @@ export function SFTPUpload(arg1:string,arg2:string,arg3:string):Promise<void>;
 export function SFTPDelete(arg1:string,arg2:string):Promise<void>;
 export function SFTPRename(arg1:string,arg2:string,arg3:string):Promise<void>;
 export function SFTPMkdir(arg1:string,arg2:string):Promise<void>;
+
+export function GenerateSSHKey(arg1:string,arg2:string):Promise<[string,string]>;
+export function ImportSSHKey(arg1:string,arg2:string):Promise<string>;
+export function ListSSHKeys():Promise<Array<store.KeyInfo>>;
+export function DeleteSSHKey(arg1:string):Promise<void>;
+export function GetPublicKey(arg1:string):Promise<string>;

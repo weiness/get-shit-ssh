@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"gss/internal/crypto"
 	"gss/internal/ssh"
 	"gss/internal/store"
 )
@@ -249,4 +250,72 @@ func (a *App) SFTPMkdir(sftpID, remotePath string) error {
 		return errors.New("sftp session not found")
 	}
 	return val.(*ssh.SFTPSession).Mkdir(remotePath)
+}
+
+// GenerateSSHKey generates an SSH key pair and stores it in the database.
+// algorithm must be "ed25519" or "ecdsa".
+// Returns the public key string and the new key ID.
+func (a *App) GenerateSSHKey(algorithm, name string) (string, string, error) {
+	pubKey, privPEM, err := ssh.GenerateKey(algorithm)
+	if err != nil {
+		return "", "", fmt.Errorf("generate key: %w", err)
+	}
+
+	encPriv, err := encryptKey(a.encKey, privPEM)
+	if err != nil {
+		return "", "", fmt.Errorf("encrypt private key: %w", err)
+	}
+
+	info, err := a.db.SaveKey(name, pubKey, encPriv)
+	if err != nil {
+		return "", "", fmt.Errorf("save key: %w", err)
+	}
+	return pubKey, info.ID, nil
+}
+
+// ImportSSHKey imports a PEM-encoded private key and stores it in the database.
+// Returns the key ID.
+func (a *App) ImportSSHKey(pemData, name string) (string, error) {
+	pubKey, privPEM, err := ssh.ImportKey([]byte(pemData))
+	if err != nil {
+		return "", fmt.Errorf("import key: %w", err)
+	}
+
+	encPriv, err := encryptKey(a.encKey, privPEM)
+	if err != nil {
+		return "", fmt.Errorf("encrypt private key: %w", err)
+	}
+
+	info, err := a.db.SaveKey(name, pubKey, encPriv)
+	if err != nil {
+		return "", fmt.Errorf("save key: %w", err)
+	}
+	return info.ID, nil
+}
+
+// ListSSHKeys returns all stored SSH keys (without private key data).
+func (a *App) ListSSHKeys() ([]*store.KeyInfo, error) {
+	return a.db.ListKeys()
+}
+
+// DeleteSSHKey removes a stored SSH key by ID.
+func (a *App) DeleteSSHKey(id string) error {
+	return a.db.DeleteKey(id)
+}
+
+// GetPublicKey returns the public key string for the given key ID.
+func (a *App) GetPublicKey(id string) (string, error) {
+	info, _, err := a.db.GetKey(id)
+	if err != nil {
+		return "", err
+	}
+	if info == nil {
+		return "", errors.New("key not found")
+	}
+	return info.PublicKey, nil
+}
+
+// encryptKey is a thin wrapper so we can test without importing crypto directly.
+func encryptKey(encKey, plaintext []byte) ([]byte, error) {
+	return crypto.Encrypt(encKey, plaintext)
 }

@@ -26,7 +26,26 @@ export namespace ssh {
 }
 
 export namespace store {
-	
+
+	export class KeyInfo {
+		id: string;
+		name: string;
+		publicKey: string;
+		createdAt: number;
+
+		static createFrom(source: any = {}) {
+			return new KeyInfo(source);
+		}
+
+		constructor(source: any = {}) {
+			if ('string' === typeof source) source = JSON.parse(source);
+			this.id = source["id"];
+			this.name = source["name"];
+			this.publicKey = source["publicKey"];
+			this.createdAt = source["createdAt"];
+		}
+	}
+
 	export class Host {
 	    ID: string;
 	    Name: string;
@@ -39,11 +58,11 @@ export namespace store {
 	    KeyID: string;
 	    CreatedAt: number;
 	    UpdatedAt: number;
-	
+
 	    static createFrom(source: any = {}) {
 	        return new Host(source);
 	    }
-	
+
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.ID = source["ID"];
@@ -61,4 +80,3 @@ export namespace store {
 	}
 
 }
-
