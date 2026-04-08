@@ -77,11 +77,20 @@ jobs:
         with:
           path: dist/
 
+      - name: Extract changelog
+        id: changelog
+        run: |
+          VERSION="${{ github.ref_name }}"
+          BODY=$(awk "/^## ${VERSION}/,/^## v[0-9]/" CHANGELOG.md | sed '$d')
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          echo "$BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           name: GSS ${{ github.ref_name }}
-          generate_release_notes: true
+          body: ${{ steps.changelog.outputs.body }}
           files: |
             dist/gss-windows-amd64.exe/gss.exe
             dist/gss-macos-universal.app.zip/gss-macos-universal.app.zip
