@@ -214,7 +214,6 @@ export function HostList() {
           )}
           <button
             onClick={() => { setEditingHost(undefined); setShowForm(true) }}
-            disabled={connecting}
             title="添加主机"
             className="w-6 h-6 flex items-center justify-center bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white rounded-md transition-colors"
           >
