@@ -23,11 +23,6 @@ jobs:
             artifact: gss.app
             output: gss-macos-universal.app.zip
 
-          - os: ubuntu-latest
-            platform: linux/amd64
-            artifact: gss
-            output: gss-linux-amd64
-
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -44,12 +39,6 @@ jobs:
       - name: Install Wails
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
-      - name: Install Linux dependencies
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev
-
       - name: Install frontend dependencies
         run: cd frontend && npm install
 
@@ -62,10 +51,6 @@ jobs:
         run: |
           wails build -platform ${{ matrix.platform }} -o ${{ matrix.artifact }}
           cd build/bin && zip -r ${{ matrix.output }} ${{ matrix.artifact }}
-
-      - name: Build (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        run: wails build -platform ${{ matrix.platform }} -o ${{ matrix.artifact }}
 
       - name: Upload artifact (Windows)
         if: matrix.os == 'windows-latest'
@@ -80,13 +65,6 @@ jobs:
         with:
           name: ${{ matrix.output }}
           path: build/bin/${{ matrix.output }}
-
-      - name: Upload artifact (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.output }}
-          path: build/bin/${{ matrix.artifact }}
 
   publish:
     needs: release
@@ -107,6 +85,5 @@ jobs:
           files: |
             dist/gss-windows-amd64.exe/gss.exe
             dist/gss-macos-universal.app.zip/gss-macos-universal.app.zip
-            dist/gss-linux-amd64/gss
           draft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
