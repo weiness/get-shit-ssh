@@ -103,18 +103,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: GSS ${{ github.ref_name }}
-          body: |
-            ## GSS ${{ github.ref_name }}
-
-            ### Download
-            | Platform | File |
-            |----------|------|
-            | Windows (x64) | `gss-windows-amd64.exe` |
-            | macOS (Universal) | `gss-macos-universal.app.zip` |
-            | Linux (x64) | `gss-linux-amd64` |
-
-            ### Changelog
-            See [commits](${{ github.server_url }}/${{ github.repository }}/commits/${{ github.ref_name }}) since last release.
+          generate_release_notes: true
           files: |
             dist/gss-windows-amd64.exe/gss.exe
             dist/gss-macos-universal.app.zip/gss-macos-universal.app.zip
