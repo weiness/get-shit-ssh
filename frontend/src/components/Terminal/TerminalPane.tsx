@@ -14,12 +14,14 @@ export function TerminalPane({ termID, visible }: TerminalPaneProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const termRef = useRef<Terminal | null>(null)
   const fitAddonRef = useRef<FitAddon | null>(null)
+  const initializedRef = useRef(false)
   const [term, setTerm] = useState<Terminal | null>(null)
 
   const { resize } = useTerminalIO(termID, term)
 
   useEffect(() => {
-    if (!containerRef.current || term) return
+    if (!containerRef.current || initializedRef.current) return
+    initializedRef.current = true
 
     const terminal = new Terminal({
       fontSize: 13,
@@ -50,8 +52,11 @@ export function TerminalPane({ termID, visible }: TerminalPaneProps) {
     }
 
     window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [term, resize])
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      // Don't destroy terminal on StrictMode cleanup — only on real unmount
+    }
+  }, [])
 
   // Fit and focus when becoming visible
   useEffect(() => {

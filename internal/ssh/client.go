@@ -6,6 +6,8 @@ import (
 	"net"
 	"sync"
 
+	"github.com/google/uuid"
+
 	gossh "golang.org/x/crypto/ssh"
 
 	"gss/internal/crypto"
@@ -106,7 +108,7 @@ func (m *Manager) Connect(host *store.Host) (string, error) {
 	}
 
 	// Generate session ID and store session
-	sessionID := host.ID // Use host ID as session ID for now (will be refined)
+	sessionID := uuid.New().String()
 
 	m.mu.Lock()
 	m.sessions[sessionID] = &Session{

@@ -1,11 +1,7 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 :root {
   /* Light theme (default) */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f5f5f5;
+  --bg-primary: #f5f7fa;
+  --bg-secondary: #eef0f3;
   --text-primary: #1a1a1a;
   --text-secondary: #666666;
   --border-color: #e0e0e0;

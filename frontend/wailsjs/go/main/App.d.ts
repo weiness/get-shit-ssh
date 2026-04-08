@@ -28,6 +28,8 @@ export function ListSSHKeys():Promise<Array<store.KeyInfo>>;
 
 export function ListSessionLogs():Promise<Array<store.SessionLog>>;
 
+export function OpenFilePickerDialog(arg1:string):Promise<string>;
+
 export function OpenTerminal(arg1:string,arg2:number,arg3:number):Promise<string>;
 
 export function SFTPClose(arg1:string):Promise<void>;
@@ -52,11 +54,15 @@ export function SSHConnect(arg1:string):Promise<string>;
 
 export function SSHDisconnect(arg1:string):Promise<void>;
 
+export function SaveFilePickerDialog(arg1:string,arg2:string):Promise<string>;
+
 export function TerminalClose(arg1:string):Promise<void>;
 
 export function TerminalInput(arg1:string,arg2:string):Promise<void>;
 
 export function TerminalResize(arg1:string,arg2:number,arg3:number):Promise<void>;
+
+export function TestConnection(arg1:string,arg2:string,arg3:number,arg4:string,arg5:string):Promise<void>;
 
 export function UpdateHost(arg1:store.Host):Promise<void>;
 

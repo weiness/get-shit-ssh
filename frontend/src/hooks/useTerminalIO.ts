@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useCallback } from 'react'
 import { Terminal } from '@xterm/xterm'
 import { EventsOn } from '../../wailsjs/runtime/runtime'
 import * as App from '../../wailsjs/go/main/App'
@@ -12,14 +12,13 @@ export function useTerminalIO(termID: string, term: Terminal | null) {
 
     console.log('[useTerminalIO] Setting up for termID:', termID)
 
-    const offData = EventsOn('terminal:data:' + termID, (data: number[]) => {
-      console.log('[useTerminalIO] Received data:', data?.length, 'bytes')
-      if (data && data.length > 0) term.write(new Uint8Array(data))
+    const offData = EventsOn('terminal:data:' + termID, (data: string) => {
+      if (data) term.write(data)
     })
 
-    const offClosed = EventsOn('terminal:closed', (id: string) => {
-      console.log('[useTerminalIO] Terminal closed:', id)
-      if (id === termID) term.write('\r\n[disconnected]\r\n')
+    const offClosed = EventsOn('terminal:closed:' + termID, () => {
+      console.log('[useTerminalIO] Terminal closed:', termID)
+      term.write('\r\n[disconnected]\r\n')
     })
 
     const onDataDispose = term.onData((data) => {
@@ -33,8 +32,9 @@ export function useTerminalIO(termID: string, term: Terminal | null) {
     }
   }, [termID, term])
 
-  const resize = (rows: number, cols: number) =>
-    App.TerminalResize(termID, rows, cols).catch(console.error)
+  const resize = useCallback((rows: number, cols: number) =>
+    App.TerminalResize(termID, rows, cols).catch(console.error),
+  [termID])
 
   return { resize }
 }

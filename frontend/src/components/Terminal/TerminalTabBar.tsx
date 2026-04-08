@@ -1,9 +1,10 @@
-import { X, Terminal } from 'lucide-react'
+import { X, Terminal, Plus } from 'lucide-react'
 
 export interface TermTab {
   termID: string
   sessionID: string
   hostName: string
+  isHome?: boolean
 }
 
 interface TerminalTabBarProps {
@@ -16,28 +17,34 @@ interface TerminalTabBarProps {
 export function TerminalTabBar({ tabs, activeTermID, onSelect, onClose }: TerminalTabBarProps) {
   if (tabs.length === 0) return null
   return (
-    <div className="flex items-center gap-0 overflow-x-auto shrink-0 bg-gray-100 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600">
+    <div className="flex items-stretch overflow-x-auto">
       {tabs.map((tab) => {
         const isActive = tab.termID === activeTermID
         return (
-          <div
+          <button
             key={tab.termID}
             onClick={() => onSelect(tab.termID)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer border-r border-gray-300 dark:border-gray-600 whitespace-nowrap select-none transition-colors ${
+            className={`relative flex items-center gap-2 px-4 py-2 text-xs border-r border-gray-300 dark:border-gray-600 whitespace-nowrap select-none transition-colors ${
               isActive
-                ? 'bg-gray-900 text-green-400'
-                : 'hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
+                ? 'bg-[#1e1e2e] text-green-400'
+                : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200'
             }`}
           >
-            <Terminal size={12} />
+            {isActive && <div className="absolute top-0 left-0 right-0 h-0.5 bg-blue-500" />}
+            {tab.isHome ? <Plus size={11} /> : <Terminal size={11} />}
             <span>{tab.hostName}</span>
-            <button
+            <span
+              role="button"
               onClick={(e) => { e.stopPropagation(); onClose(tab.termID, tab.sessionID) }}
-              className={`ml-1 rounded hover:bg-gray-600/30 p-0.5 ${isActive ? 'text-gray-400 hover:text-white' : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+              className={`ml-1 rounded p-0.5 transition-colors ${
+                isActive
+                  ? 'text-gray-500 hover:text-white hover:bg-white/10'
+                  : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-black/10 dark:hover:bg-white/10'
+              }`}
             >
-              <X size={11} />
-            </button>
-          </div>
+              <X size={10} />
+            </span>
+          </button>
         )
       })}
     </div>

@@ -8,5 +8,12 @@
   "frontend:dev:serverUrl": "auto",
   "author": {
     "name": "gss"
+  },
+  "info": {
+    "companyName": "GSS",
+    "productName": "GSS",
+    "productVersion": "1.0.0",
+    "copyright": "Copyright © 2024",
+    "comments": "Get Shit SSH - SSH Client"
   }
 }

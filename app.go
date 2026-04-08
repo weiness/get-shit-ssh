@@ -171,13 +171,13 @@ func (a *App) pumpTerminalOutput(termID string, t *ssh.TerminalSession) {
 	defer func() {
 		log.Printf("[pumpTerminalOutput] Terminal %s closed, cleaning up", termID)
 		a.terminals.Delete(termID)
-		runtime.EventsEmit(a.ctx, "terminal:closed", termID)
+		runtime.EventsEmit(a.ctx, "terminal:closed:"+termID)
 	}()
 
 	log.Printf("[pumpTerminalOutput] Started pumping for terminal %s", termID)
 	for data := range t.ReadChan() {
 		log.Printf("[pumpTerminalOutput] Emitting %d bytes for terminal %s", len(data), termID)
-		runtime.EventsEmit(a.ctx, "terminal:data:"+termID, data)
+		runtime.EventsEmit(a.ctx, "terminal:data:"+termID, string(data))
 	}
 	log.Printf("[pumpTerminalOutput] ReadChan closed for terminal %s", termID)
 }

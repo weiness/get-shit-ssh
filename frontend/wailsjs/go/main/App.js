@@ -50,6 +50,10 @@ export function ListSessionLogs() {
   return window['go']['main']['App']['ListSessionLogs']();
 }
 
+export function OpenFilePickerDialog(arg1) {
+  return window['go']['main']['App']['OpenFilePickerDialog'](arg1);
+}
+
 export function OpenTerminal(arg1, arg2, arg3) {
   return window['go']['main']['App']['OpenTerminal'](arg1, arg2, arg3);
 }
@@ -98,6 +102,10 @@ export function SSHDisconnect(arg1) {
   return window['go']['main']['App']['SSHDisconnect'](arg1);
 }
 
+export function SaveFilePickerDialog(arg1, arg2) {
+  return window['go']['main']['App']['SaveFilePickerDialog'](arg1, arg2);
+}
+
 export function TerminalClose(arg1) {
   return window['go']['main']['App']['TerminalClose'](arg1);
 }
@@ -108,6 +116,10 @@ export function TerminalInput(arg1, arg2) {
 
 export function TerminalResize(arg1, arg2, arg3) {
   return window['go']['main']['App']['TerminalResize'](arg1, arg2, arg3);
+}
+
+export function TestConnection(arg1, arg2, arg3, arg4, arg5) {
+  return window['go']['main']['App']['TestConnection'](arg1, arg2, arg3, arg4, arg5);
 }
 
 export function UpdateHost(arg1) {

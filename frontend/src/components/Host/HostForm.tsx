@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { X, Lock, Key } from 'lucide-react'
+import { X, Lock, Key, Wifi, CheckCircle, XCircle, Loader2, Eye, EyeOff } from 'lucide-react'
 import { Host } from '../../types/host'
 import { useHostStore } from '../../stores/hostStore'
 import { useKeyStore } from '../../stores/keyStore'
+import * as App from '../../../wailsjs/go/main/App'
 
 interface HostFormProps {
   host?: Host
@@ -11,6 +12,7 @@ interface HostFormProps {
 }
 
 type AuthType = 'password' | 'key'
+type TestState = 'idle' | 'testing' | 'ok' | 'fail'
 
 const emptyHost = (): Host => ({
   id: '',
@@ -34,13 +36,50 @@ export function HostForm({ host, onDone, onCancel }: HostFormProps) {
     host?.authType === 'key' ? 'key' : 'password'
   )
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [keyID, setKeyID] = useState(host?.keyId ?? '')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const [testState, setTestState] = useState<TestState>('idle')
+  const [testMsg, setTestMsg] = useState('')
+
   useEffect(() => { fetchKeys() }, [fetchKeys])
 
+  // Reset test state when form changes
+  useEffect(() => { setTestState('idle'); setTestMsg('') }, [form.host, form.port, form.username, authType, password, keyID])
+
   const set = (patch: Partial<Host>) => setForm((f) => ({ ...f, ...patch }))
+
+  const handleTest = async () => {
+    if (!form.host || !form.username) {
+      setTestState('fail')
+      setTestMsg('请先填写地址和用户名')
+      return
+    }
+    if (authType === 'password' && !password) {
+      setTestState('fail')
+      setTestMsg(host ? '编辑模式下测试连接需要重新输入密码' : '请输入密码')
+      return
+    }
+    if (authType === 'key' && !keyID) {
+      setTestState('fail')
+      setTestMsg('请选择 SSH 密钥')
+      return
+    }
+
+    setTestState('testing')
+    setTestMsg('')
+    try {
+      const secret = authType === 'password' ? password : keyID
+      await App.TestConnection(form.host, form.username, form.port, authType, secret)
+      setTestState('ok')
+      setTestMsg('连接成功')
+    } catch (e) {
+      setTestState('fail')
+      setTestMsg(String(e).replace(/^error: /, ''))
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -59,7 +98,6 @@ export function HostForm({ host, onDone, onCancel }: HostFormProps) {
     try {
       const isEdit = Boolean(host?.id)
       if (authType === 'password') {
-        // When editing and password left blank, keep existing auth unchanged
         if (isEdit && !password) {
           await updateHostWithPassword(form, '')
         } else if (isEdit) {
@@ -159,8 +197,22 @@ export function HostForm({ host, onDone, onCancel }: HostFormProps) {
               <label className="block text-sm font-medium mb-1">
                 密码{host && <span className="text-gray-400 font-normal ml-1">(留空保持不变)</span>}
               </label>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-                className={inputCls} placeholder={host ? '••••••••' : '输入密码'} />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={inputCls}
+                  placeholder={host ? '••••••••' : '输入密码'}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </div>
           ) : (
             <div>
@@ -180,6 +232,34 @@ export function HostForm({ host, onDone, onCancel }: HostFormProps) {
               )}
             </div>
           )}
+
+          {/* Test connection */}
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleTest}
+              disabled={testState === 'testing'}
+              className="flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+            >
+              {testState === 'testing'
+                ? <Loader2 size={14} className="animate-spin" />
+                : <Wifi size={14} />}
+              {testState === 'testing' ? '测试中...' : '测试连接'}
+            </button>
+
+            {testState === 'ok' && (
+              <span className="flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400">
+                <CheckCircle size={15} />
+                {testMsg}
+              </span>
+            )}
+            {testState === 'fail' && (
+              <span className="flex items-center gap-1.5 text-sm text-red-500 min-w-0">
+                <XCircle size={15} className="shrink-0" />
+                <span className="truncate" title={testMsg}>{testMsg}</span>
+              </span>
+            )}
+          </div>
 
           {error && <p className="text-sm text-red-500">{error}</p>}
 

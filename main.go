@@ -22,6 +22,7 @@ func main() {
 			Assets: assets,
 		},
 		BackgroundColour: &options.RGBA{R: 30, G: 30, B: 46, A: 1},
+		Debug:            options.Debug{OpenInspectorOnStartup: true},
 		OnStartup:        app.startup,
 		OnShutdown:       app.shutdown,
 		Bind: []interface{}{
