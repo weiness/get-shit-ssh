@@ -49,8 +49,8 @@ jobs:
       - name: Build (macOS)
         if: matrix.os == 'macos-latest'
         run: |
-          wails build -platform ${{ matrix.platform }} -o ${{ matrix.artifact }}
-          cd build/bin && zip -r ${{ matrix.output }} ${{ matrix.artifact }}
+          wails build -platform ${{ matrix.platform }}
+          cd build/bin && zip -r ${{ matrix.output }} gss.app
 
       - name: Upload artifact (Windows)
         if: matrix.os == 'windows-latest'
