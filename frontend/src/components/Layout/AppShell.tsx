@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { HostList } from '../Host/HostList'
 import { KeyList } from '../KeyManager/KeyList'
 import { SessionHistory } from '../Session/SessionHistory'
+import { ShortcutsModal } from '../common/ShortcutsModal'
 import { useThemeStore } from '../../stores/themeStore'
-import { Server, Key, History, Sun, Moon, Zap } from 'lucide-react'
+import { Server, Key, History, Sun, Moon, Zap, Keyboard } from 'lucide-react'
 
 type Page = 'hosts' | 'keys' | 'history'
 
@@ -16,6 +17,7 @@ const NAV_ITEMS = [
 export function AppShell() {
   const [page, setPage] = useState<Page>('hosts')
   const { theme, setTheme } = useThemeStore()
+  const [showShortcuts, setShowShortcuts] = useState(false)
 
   return (
     <div className="flex h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 overflow-hidden">
@@ -51,8 +53,15 @@ export function AppShell() {
           })}
         </nav>
 
-        {/* Theme toggle */}
-        <div className="flex flex-col items-center pb-3">
+        {/* Theme toggle + shortcuts */}
+        <div className="flex flex-col items-center pb-3 gap-1">
+          <button
+            onClick={() => setShowShortcuts(true)}
+            title="键盘快捷键"
+            className="w-10 h-10 flex items-center justify-center rounded-xl text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
+          >
+            <Keyboard size={17} />
+          </button>
           <button
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             title={theme === 'dark' ? '切换亮色' : '切换暗色'}
@@ -69,6 +78,8 @@ export function AppShell() {
         {page === 'keys'    && <KeyList />}
         {page === 'history' && <SessionHistory />}
       </main>
+
+      {showShortcuts && <ShortcutsModal onClose={() => setShowShortcuts(false)} />}
     </div>
   )
 }

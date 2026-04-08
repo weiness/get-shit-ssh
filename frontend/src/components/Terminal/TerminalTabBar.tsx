@@ -3,8 +3,10 @@ import { X, Terminal, Plus } from 'lucide-react'
 export interface TermTab {
   termID: string
   sessionID: string
+  hostID: string
   hostName: string
   isHome?: boolean
+  status?: 'connected' | 'disconnected'
 }
 
 interface TerminalTabBarProps {
@@ -20,6 +22,7 @@ export function TerminalTabBar({ tabs, activeTermID, onSelect, onClose }: Termin
     <div className="flex items-stretch overflow-x-auto">
       {tabs.map((tab) => {
         const isActive = tab.termID === activeTermID
+        const isDisconnected = tab.status === 'disconnected'
         return (
           <button
             key={tab.termID}
@@ -32,7 +35,13 @@ export function TerminalTabBar({ tabs, activeTermID, onSelect, onClose }: Termin
           >
             {isActive && <div className="absolute top-0 left-0 right-0 h-0.5 bg-blue-500" />}
             {tab.isHome ? <Plus size={11} /> : <Terminal size={11} />}
-            <span>{tab.hostName}</span>
+            {/* Status dot */}
+            {!tab.isHome && (
+              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                isDisconnected ? 'bg-red-400' : 'bg-green-400'
+              }`} />
+            )}
+            <span className={isDisconnected ? 'opacity-60' : ''}>{tab.hostName}</span>
             <span
               role="button"
               onClick={(e) => { e.stopPropagation(); onClose(tab.termID, tab.sessionID) }}

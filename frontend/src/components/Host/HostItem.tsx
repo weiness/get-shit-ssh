@@ -7,6 +7,7 @@ interface HostItemProps {
   onDelete: (id: string) => void
   onConnect: (hostID: string, hostName: string) => void
   onFiles: (hostID: string, hostName: string) => void
+  connecting?: boolean
 }
 
 const AVATAR_COLORS = [
@@ -20,7 +21,7 @@ function avatarColor(name: string) {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
 }
 
-export function HostItem({ host, onEdit, onDelete, onConnect, onFiles }: HostItemProps) {
+export function HostItem({ host, onEdit, onDelete, onConnect, onFiles, connecting }: HostItemProps) {
   const color = avatarColor(host.name)
   const initial = host.name.charAt(0).toUpperCase()
 
@@ -59,8 +60,9 @@ export function HostItem({ host, onEdit, onDelete, onConnect, onFiles }: HostIte
       <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
         <button
           onClick={() => onConnect(host.id, host.name)}
+          disabled={connecting}
           title="打开终端"
-          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-medium rounded-lg transition-colors"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-medium rounded-lg transition-colors"
         >
           <Terminal size={13} />
           连接

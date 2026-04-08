@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useHostStore } from '../../stores/hostStore'
 import { useSessionStore } from '../../stores/sessionStore'
 import { Host } from '../../types/host'
@@ -12,19 +12,29 @@ import { Plus, Search, Server, X, PanelLeftOpen, PanelLeftClose } from 'lucide-r
 
 type RightPanel = { type: 'sftp'; sessionID: string } | null
 
+const CONNECT_TIMEOUT_MS = 15000
+
+function connectWithTimeout<T>(promise: Promise<T>): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('连接超时（15秒），请检查网络或主机地址')), CONNECT_TIMEOUT_MS)
+    ),
+  ])
+}
+
 export function HostList() {
   const { hosts, fetchHosts, removeHost } = useHostStore()
   const { connect, openTerminal, closeTerminal, disconnect } = useSessionStore()
   const [editingHost, setEditingHost] = useState<Host | undefined>()
   const [showForm, setShowForm] = useState(false)
-  const [connecting, setConnecting] = useState(false)
+  const [connectingHosts, setConnectingHosts] = useState<Set<string>>(new Set())
   const [search, setSearch] = useState('')
 
   const [tabs, setTabs] = useState<TermTab[]>([])
   const [activeTermID, setActiveTermID] = useState<string | null>(null)
   const [sftpPanel, setSftpPanel] = useState<RightPanel>(null)
 
-  // Host panel state: auto-hide when terminal opens
   const [hostPanelOpen, setHostPanelOpen] = useState(true)
   const panelRef = useRef<HTMLDivElement>(null)
 
@@ -32,13 +42,11 @@ export function HostList() {
 
   useEffect(() => { fetchHosts() }, [fetchHosts])
 
-  // Auto-hide host panel when first terminal opens
   useEffect(() => {
     if (hasSession) setHostPanelOpen(false)
     else setHostPanelOpen(true)
   }, [hasSession])
 
-  // Close panel when clicking outside (only in terminal mode)
   useEffect(() => {
     if (!hasSession || !hostPanelOpen) return
     const handler = (e: MouseEvent) => {
@@ -59,47 +67,65 @@ export function HostList() {
   const handleEdit = (host: Host) => { setEditingHost(host); setShowForm(true) }
   const handleFormDone = () => { setShowForm(false); setEditingHost(undefined); fetchHosts() }
 
-  const connectingRef = useRef(false)
-  // homeTabID: if provided, replace that home tab with the new terminal tab
-  const handleConnect = async (hostID: string, hostName: string, homeTabID?: string) => {
-    if (connectingRef.current) return
-    connectingRef.current = true
-    setConnecting(true)
+  const addConnecting = (id: string) => setConnectingHosts((s) => new Set(s).add(id))
+  const removeConnecting = (id: string) => setConnectingHosts((s) => { const n = new Set(s); n.delete(id); return n })
+
+  const handleConnect = useCallback(async (hostID: string, hostName: string, replaceTabID?: string) => {
+    if (connectingHosts.has(hostID)) return
+    addConnecting(hostID)
     try {
-      const sessionID = await connect(hostID, hostName)
+      const sessionID = await connectWithTimeout(connect(hostID, hostName))
       const termID = await openTerminal(sessionID, 24, 80)
-      const newTab: TermTab = { termID, sessionID, hostName }
+      const newTab: TermTab = { termID, sessionID, hostID, hostName, status: 'connected' }
       setTabs((prev) => {
-        if (homeTabID) {
-          return prev.map((t) => t.termID === homeTabID ? newTab : t)
-        }
+        if (replaceTabID) return prev.map((t) => t.termID === replaceTabID ? newTab : t)
         return [...prev, newTab]
       })
       setActiveTermID(termID)
       setSftpPanel(null)
     } catch (error) {
-      console.error('[HostList] Connection failed:', error)
       alert('连接失败: ' + (error instanceof Error ? error.message : String(error)))
     } finally {
-      setConnecting(false)
-      connectingRef.current = false
+      removeConnecting(hostID)
     }
-  }
+  }, [connect, openTerminal, connectingHosts])
+
+  const handleReconnect = useCallback(async (tab: TermTab) => {
+    if (connectingHosts.has(tab.hostID)) return
+    addConnecting(tab.hostID)
+    setTabs((prev) => prev.map((t) => t.termID === tab.termID ? { ...t, status: undefined } : t))
+    try {
+      const sessionID = await connectWithTimeout(connect(tab.hostID, tab.hostName))
+      const termID = await openTerminal(sessionID, 24, 80)
+      const newTab: TermTab = { termID, sessionID, hostID: tab.hostID, hostName: tab.hostName, status: 'connected' }
+      setTabs((prev) => prev.map((t) => t.termID === tab.termID ? newTab : t))
+      setActiveTermID(termID)
+    } catch (error) {
+      setTabs((prev) => prev.map((t) => t.termID === tab.termID ? { ...t, status: 'disconnected' } : t))
+      alert('重连失败: ' + (error instanceof Error ? error.message : String(error)))
+    } finally {
+      removeConnecting(tab.hostID)
+    }
+  }, [connect, openTerminal, connectingHosts])
+
+  const handleTabDisconnected = useCallback((termID: string) => {
+    setTabs((prev) => prev.map((t) => t.termID === termID ? { ...t, status: 'disconnected' } : t))
+  }, [])
 
   const handleFiles = async (hostID: string, hostName: string) => {
-    setConnecting(true)
+    if (connectingHosts.has(hostID)) return
+    addConnecting(hostID)
     try {
-      const sessionID = await connect(hostID, hostName)
+      const sessionID = await connectWithTimeout(connect(hostID, hostName))
       setSftpPanel({ type: 'sftp', sessionID })
     } catch (error) {
       alert('连接失败: ' + (error instanceof Error ? error.message : String(error)))
     } finally {
-      setConnecting(false)
+      removeConnecting(hostID)
     }
   }
 
-  const handleTabClose = async (termID: string, sessionID: string) => {
-    // Home tabs have no real session
+  const handleTabClose = useCallback(async (termID: string, sessionID: string) => {
     if (sessionID) {
       await closeTerminal(termID)
       await disconnect(sessionID)
@@ -108,20 +134,75 @@ export function HostList() {
       const next = prev.filter((t) => t.termID !== termID)
       if (activeTermID === termID) setActiveTermID(next.length > 0 ? next[next.length - 1].termID : null)
       return next
+      // When next is empty, hasSession becomes false → auto-shows host list
     })
-  }
+  }, [closeTerminal, disconnect, activeTermID])
 
-  const handleAddHomeTab = () => {
+  const handleAddHomeTab = useCallback(() => {
     const homeID = 'home-' + Date.now()
-    setTabs((prev) => [...prev, { termID: homeID, sessionID: '', hostName: '新连接', isHome: true }])
+    setTabs((prev) => [...prev, { termID: homeID, sessionID: '', hostID: '', hostName: '新连接', isHome: true }])
     setActiveTermID(homeID)
     setSftpPanel(null)
-  }
+  }, [])
+
+  // Keyboard shortcuts — stable handler via ref
+  const stateRef = useRef({ tabs, activeTermID, hostPanelOpen })
+  useEffect(() => { stateRef.current = { tabs, activeTermID, hostPanelOpen } })
+
+  const shortcutHandler = useCallback((e: KeyboardEvent): boolean => {
+    if (!e.ctrlKey) return true
+    const { tabs, activeTermID, hostPanelOpen } = stateRef.current
+
+    if (e.key === 't') {
+      e.preventDefault()
+      handleAddHomeTab()
+      return false
+    }
+    if (e.key === 'w') {
+      e.preventDefault()
+      if (activeTermID) {
+        const tab = tabs.find((t) => t.termID === activeTermID)
+        if (tab) handleTabClose(tab.termID, tab.sessionID)
+      }
+      return false
+    }
+    if (e.key === 'Tab' && !e.shiftKey) {
+      e.preventDefault()
+      if (tabs.length > 1 && activeTermID) {
+        const idx = tabs.findIndex((t) => t.termID === activeTermID)
+        setActiveTermID(tabs[(idx + 1) % tabs.length].termID)
+      }
+      return false
+    }
+    if (e.key === 'Tab' && e.shiftKey) {
+      e.preventDefault()
+      if (tabs.length > 1 && activeTermID) {
+        const idx = tabs.findIndex((t) => t.termID === activeTermID)
+        setActiveTermID(tabs[(idx - 1 + tabs.length) % tabs.length].termID)
+      }
+      return false
+    }
+    if (e.key === '`') {
+      e.preventDefault()
+      setHostPanelOpen(!hostPanelOpen)
+      return false
+    }
+    return true
+  }, [handleAddHomeTab, handleTabClose])
+
+  // Document-level shortcuts (when terminal is not focused)
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+      shortcutHandler(e)
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [shortcutHandler])
 
   // Host list panel content
   const HostPanel = (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-3 shrink-0">
         <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">主机</h2>
         <div className="flex items-center gap-1">
@@ -142,7 +223,6 @@ export function HostList() {
         </div>
       </div>
 
-      {/* Search */}
       <div className="px-3 pb-3 shrink-0">
         <div className="flex items-center gap-2 px-2.5 py-1.5 bg-gray-100 dark:bg-gray-700/50 rounded-lg border border-transparent focus-within:border-blue-500/50">
           <Search size={12} className="text-gray-400 shrink-0" />
@@ -155,7 +235,6 @@ export function HostList() {
         </div>
       </div>
 
-      {/* List */}
       <div className="flex-1 overflow-y-auto px-2 pb-4">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-gray-400">
@@ -171,7 +250,8 @@ export function HostList() {
             {filtered.map((host) => (
               <HostItem key={host.id} host={host}
                 onEdit={handleEdit} onDelete={removeHost}
-                onConnect={handleConnect} onFiles={handleFiles} />
+                onConnect={handleConnect} onFiles={handleFiles}
+                connecting={connectingHosts.has(host.id)} />
             ))}
           </div>
         )}
@@ -179,7 +259,6 @@ export function HostList() {
     </div>
   )
 
-  // No terminal open: host list takes full area
   if (!hasSession) {
     return (
       <div className="h-full">
@@ -192,10 +271,8 @@ export function HostList() {
     )
   }
 
-  // Terminal open: terminal takes full area, host list is a floating overlay
   return (
     <div className="flex h-full relative overflow-hidden">
-      {/* Floating host panel overlay */}
       {hostPanelOpen && (
         <div
           ref={panelRef}
@@ -205,14 +282,11 @@ export function HostList() {
         </div>
       )}
 
-      {/* Terminal area — always full width */}
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-        {/* Tab bar with toggle button */}
         <div className="flex items-center shrink-0 bg-gray-100 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-          {/* Host panel toggle */}
           <button
             onClick={() => setHostPanelOpen((v) => !v)}
-            title={hostPanelOpen ? '收起主机列表' : '展开主机列表'}
+            title={hostPanelOpen ? '收起主机列表 (Ctrl+`)' : '展开主机列表 (Ctrl+`)'}
             className={`shrink-0 px-3 h-full flex items-center border-r border-gray-200 dark:border-gray-700 transition-colors ${
               hostPanelOpen
                 ? 'text-blue-500 bg-blue-50 dark:bg-blue-500/10'
@@ -239,21 +313,18 @@ export function HostList() {
                 onSelect={setActiveTermID}
                 onClose={handleTabClose}
               />
-              {/* + new tab button */}
               <button
                 onClick={handleAddHomeTab}
-                title="新建连接标签页"
+                title="新建连接标签页 (Ctrl+T)"
                 className="shrink-0 px-3 h-full flex items-center text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-800 border-l border-gray-200 dark:border-gray-700 transition-colors"
               >
                 <Plus size={14} />
               </button>
-              {/* spacer */}
               <div className="flex-1" />
             </>
           )}
         </div>
 
-        {/* Content */}
         <div className="flex-1 relative overflow-hidden">
           {sftpPanel ? (
             <SFTPBrowser sessionID={sftpPanel.sessionID} onClose={() => setSftpPanel(null)} />
@@ -264,11 +335,18 @@ export function HostList() {
                 {tab.isHome ? (
                   <QuickConnectPane
                     hosts={hosts}
-                    connecting={connecting}
+                    connectingHosts={connectingHosts}
                     onConnect={(hostID, hostName) => handleConnect(hostID, hostName, tab.termID)}
                   />
                 ) : (
-                  <TerminalPane termID={tab.termID} visible={tab.termID === activeTermID} />
+                  <TerminalPane
+                    termID={tab.termID}
+                    visible={tab.termID === activeTermID}
+                    disconnected={tab.status === 'disconnected'}
+                    onReconnect={() => handleReconnect(tab)}
+                    onKeyboardShortcut={shortcutHandler}
+                    onDisconnected={() => handleTabDisconnected(tab.termID)}
+                  />
                 )}
               </div>
             ))

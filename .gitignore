@@ -1,0 +1,39 @@
+# Build output
+build/bin/
+build/darwin/
+build/linux/
+build/windows/
+*.exe
+*.app
+*.dmg
+*.deb
+*.rpm
+
+# Go
+vendor/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.omc/
+
+# Wails dev
+wailsjs/
+
+# IDE / tools
+.omc/
+.claude/
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets / local config
+*.env
+.env.*
+*.pem
+*.key

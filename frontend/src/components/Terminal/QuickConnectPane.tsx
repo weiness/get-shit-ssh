@@ -3,11 +3,11 @@ import { Host } from '../../types/host'
 
 interface QuickConnectPaneProps {
   hosts: Host[]
-  connecting: boolean
+  connectingHosts: Set<string>
   onConnect: (hostID: string, hostName: string) => void
 }
 
-export function QuickConnectPane({ hosts, connecting, onConnect }: QuickConnectPaneProps) {
+export function QuickConnectPane({ hosts, connectingHosts, onConnect }: QuickConnectPaneProps) {
   return (
     <div className="flex flex-col items-center justify-center h-full bg-gray-50 dark:bg-[#1e1e2e] text-gray-700 dark:text-gray-300 px-8 gap-6">
       <div className="flex flex-col items-center gap-2 text-center">
@@ -23,7 +23,7 @@ export function QuickConnectPane({ hosts, connecting, onConnect }: QuickConnectP
           {hosts.map((host) => (
             <button
               key={host.id}
-              disabled={connecting}
+              disabled={connectingHosts.has(host.id)}
               onClick={() => onConnect(host.id, host.name)}
               className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed border border-gray-200 dark:border-white/5 hover:border-gray-300 dark:hover:border-white/10 transition-all text-left group shadow-sm"
             >
