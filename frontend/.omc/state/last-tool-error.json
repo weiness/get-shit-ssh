@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"type \\\"D:\\\\code\\\\github\\\\get-shit-ssh\\\\frontend\\\\src\\\\components\\\\Layout\\\\AppShell.tsx\\\"\"}",
-  "error": "Exit code 1\n/c/Users/lcwei2/.bashrc: line 1: $'\\377\\376cd': command not found\n/c/Users/lcwei2/.bashrc: line 2: d:\\wsl: Is a directory\n/usr/bin/bash: line 1: type: D:\\code\\github\\get-shit-ssh\\frontend\\src\\components\\Layout\\AppShell.tsx: not found\n[rerun: b10]",
-  "timestamp": "2026-04-08T08:57:21.232Z",
-  "retry_count": 1
-}
