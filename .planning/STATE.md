@@ -1,25 +1,25 @@
 # State: GSS
 
 **Status**: active
-**Last activity**: 2026-04-09 — Milestone v1.1 started
+**Last activity**: 2026-04-09 — Milestone v1.0.1 started
 
 ## Current Position
 
 Phase: 4 — 终端体验优化
 Plan: —
 Status: Not started
-Last activity: 2026-04-09 — Milestone v1.1 started
+Last activity: 2026-04-09 — Milestone v1.0.1 started
 
 ## Project Reference
 
 See: .planning/PROJECT.md (updated 2026-04-09)
 
 **Core value:** 比 PuTTY / SecureCRT 更现代、更轻量的桌面 SSH 客户端，开箱即用
-**Current focus:** v1.1 细节打磨 — Phase 4 终端体验优化
+**Current focus:** v1.0.1 细节打磨 — Phase 4 终端体验优化
 
 ## Current Milestone
 
-v1.1 细节打磨 — Phases 4-5
+v1.0.1 细节打磨 — Phases 4-5
 
 ## Open Blockers
 

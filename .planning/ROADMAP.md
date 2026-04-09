@@ -2,21 +2,20 @@
 
 ## Milestones
 
-- ✅ **v1.0 MVP** — Phases 1-3 (shipped 2026-04-09) → [Archive](milestones/v1.0-ROADMAP.md)
-- 🚧 **v1.1 细节打磨** — Phases 4-5 (in progress)
+- ✅ **v1.0.0 MVP** — Phases 1-3 (shipped 2026-04-09) → [Archive](milestones/v1.0-ROADMAP.md)
+- 🚧 **v1.0.1 细节打磨** — Phases 4-5 (in progress)
 
 ## Phases
 
 <details>
-<summary>✅ v1.0 MVP (Phases 1-3) — SHIPPED 2026-04-09</summary>
-
+<summary>✅ v1.0.0 MVP (Phases 1-3) — SHIPPED 2026-04-09</summary>
 - [x] Phase 1: 核心基础 (完成)
 - [x] Phase 2: 功能完善 (完成)
 - [x] Phase 3: 发布准备 (完成)
 
 </details>
 
-### 🚧 v1.1 细节打磨
+### 🚧 v1.0.1 细节打磨
 
 - [ ] Phase 4: 终端体验优化
 - [ ] Phase 5: 主机管理与交互反馈
@@ -61,8 +60,8 @@
 
 | Phase | Milestone | 状态 | 完成日期 |
 |-------|-----------|------|----------|
-| 1. 核心基础 | v1.0 | Complete | 2026-04-03 |
-| 2. 功能完善 | v1.0 | Complete | 2026-04-08 |
-| 3. 发布准备 | v1.0 | Complete | 2026-04-09 |
-| 4. 终端体验优化 | v1.1 | Not started | — |
-| 5. 主机管理与交互反馈 | v1.1 | Not started | — |
+| 1. 核心基础 | v1.0.0 | Complete | 2026-04-03 |
+| 2. 功能完善 | v1.0.0 | Complete | 2026-04-08 |
+| 3. 发布准备 | v1.0.0 | Complete | 2026-04-09 |
+| 4. 终端体验优化 | v1.0.1 | Not started | — |
+| 5. 主机管理与交互反馈 | v1.0.1 | Not started | — |

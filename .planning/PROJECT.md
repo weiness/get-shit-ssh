@@ -63,7 +63,7 @@
 | xterm.js 终端 | ✓ 正确 | 成熟稳定，原生支持 ANSI 转义序列 |
 | 手动 CHANGELOG（非自动生成） | ✓ 正确 | 自动生成 release notes 不够易读，手写更有价值 |
 
-## Current Milestone: v1.1 细节打磨
+## Current Milestone: v1.0.1 细节打磨
 
 **Goal:** 修复交互细节、提升终端体验、统一视觉一致性，不添加新功能
 
@@ -85,4 +85,4 @@
 - **下一个里程碑候选**: 严格主机密钥验证、连接分组
 
 ---
-*Last updated: 2026-04-09 after v1.0 milestone, v1.1 started*
+*Last updated: 2026-04-09 after v1.0.0 milestone, v1.0.1 started*
