@@ -30,6 +30,12 @@
 
 **Depends on:** Phase 3 (已完成)
 
+**Plans:** 2 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — 终端主题联动（亮色/暗色主题动态切换 + Tab/QuickConnect 背景色同步）
+- [ ] 04-02-PLAN.md — 右键菜单 + Tab Tooltip（复制/粘贴/清空 + 完整主机信息悬停提示）
+
 **Success criteria:**
 1. 终端区域右键弹出菜单，复制/粘贴/清空均可正常工作
 2. 无选中文本时「复制」项视觉置灰
