@@ -8,8 +8,8 @@ import { TerminalPane } from '../Terminal/TerminalPane'
 import { TerminalTabBar, TermTab } from '../Terminal/TerminalTabBar'
 import { QuickConnectPane } from '../Terminal/QuickConnectPane'
 import { SFTPBrowser } from '../FileManager/SFTPBrowser'
-import { SettingsModal, AppSettings } from '../Settings/SettingsModal'
-import { Plus, Search, Server, X, PanelLeftOpen, PanelLeftClose, Settings } from 'lucide-react'
+import { AppSettings } from '../Settings/SettingsModal'
+import { Plus, Search, Server, X, PanelLeftOpen, PanelLeftClose } from 'lucide-react'
 
 type RightPanel = { type: 'sftp'; sessionID: string } | null
 
@@ -24,7 +24,12 @@ function connectWithTimeout<T>(promise: Promise<T>): Promise<T> {
   ])
 }
 
-export function HostList() {
+interface HostListProps {
+  appSettings: AppSettings
+  onSettingsChange: (s: AppSettings) => void
+}
+
+export function HostList({ appSettings, onSettingsChange }: HostListProps) {
   const { hosts, fetchHosts, removeHost } = useHostStore()
   const { connect, openTerminal, closeTerminal, disconnect } = useSessionStore()
   const [editingHost, setEditingHost] = useState<Host | undefined>()
@@ -37,11 +42,6 @@ export function HostList() {
   const [sftpPanel, setSftpPanel] = useState<RightPanel>(null)
 
   const [hostPanelOpen, setHostPanelOpen] = useState(true)
-  const [showSettingsModal, setShowSettingsModal] = useState(false)
-  const [appSettings, setAppSettings] = useState<AppSettings>({
-    terminal: { fontSize: 13, cursorStyle: 'block', scrollback: 5000 },
-    connection: { connectTimeoutMs: 15000, keepaliveIntervalSec: 60 },
-  })
   const panelRef = useRef<HTMLDivElement>(null)
 
   const hasSession = tabs.length > 0 || sftpPanel !== null
@@ -171,18 +171,12 @@ export function HostList() {
     // Font size: Cmd+=/+ and Cmd+- (macOS) or Ctrl+=/+ and Ctrl+- (Win/Linux)
     if (modKey && (e.key === '=' || e.key === '+')) {
       e.preventDefault()
-      setAppSettings((prev) => ({
-        ...prev,
-        terminal: { ...prev.terminal, fontSize: Math.min(24, prev.terminal.fontSize + 1) },
-      }))
+      onSettingsChange({ ...appSettings, terminal: { ...appSettings.terminal, fontSize: Math.min(24, appSettings.terminal.fontSize + 1) } })
       return false
     }
     if (modKey && e.key === '-') {
       e.preventDefault()
-      setAppSettings((prev) => ({
-        ...prev,
-        terminal: { ...prev.terminal, fontSize: Math.max(8, prev.terminal.fontSize - 1) },
-      }))
+      onSettingsChange({ ...appSettings, terminal: { ...appSettings.terminal, fontSize: Math.max(8, appSettings.terminal.fontSize - 1) } })
       return false
     }
 
@@ -223,7 +217,7 @@ export function HostList() {
       return false
     }
     return true
-  }, [handleAddHomeTab, handleTabClose])
+  }, [handleAddHomeTab, handleTabClose, appSettings, onSettingsChange])
 
   // Document-level shortcuts (when terminal is not focused)
   useEffect(() => {
@@ -240,21 +234,12 @@ export function HostList() {
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex items-center justify-between px-4 pt-4 pb-3 shrink-0">
         <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">主机</h2>
-        <div className="flex items-center gap-1">
-          {hasSession && (
-            <button onClick={() => setHostPanelOpen(false)} title="收起"
-              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 transition-colors">
-              <X size={14} />
-            </button>
-          )}
-          <button
-            onClick={() => { setEditingHost(undefined); setShowForm(true) }}
-            title="添加主机"
-            className="w-6 h-6 flex items-center justify-center bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white rounded-md transition-colors"
-          >
-            <Plus size={13} />
+        {hasSession && (
+          <button onClick={() => setHostPanelOpen(false)} title="收起"
+            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 transition-colors">
+            <X size={14} />
           </button>
-        </div>
+        )}
       </div>
 
       <div className="px-3 pb-3 shrink-0">
@@ -266,6 +251,13 @@ export function HostList() {
             placeholder="搜索主机..."
             className="flex-1 bg-transparent text-xs outline-none text-gray-700 dark:text-gray-200 placeholder:text-gray-400"
           />
+          <button
+            onClick={() => { setEditingHost(undefined); setShowForm(true) }}
+            title="添加主机"
+            className="shrink-0 w-5 h-5 flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors"
+          >
+            <Plus size={11} />
+          </button>
         </div>
       </div>
 
@@ -328,17 +320,6 @@ export function HostList() {
             }`}
           >
             {hostPanelOpen ? <PanelLeftClose size={14} /> : <PanelLeftOpen size={14} />}
-          </button>
-          <button
-            onClick={() => setShowSettingsModal(true)}
-            title="设置"
-            className={`shrink-0 px-3 h-full flex items-center border-r border-gray-200 dark:border-gray-700 transition-colors ${
-              showSettingsModal
-                ? 'text-blue-500 bg-blue-50 dark:bg-blue-500/10'
-                : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-800'
-            }`}
-          >
-            <Settings size={14} />
           </button>
 
           {sftpPanel ? (
@@ -405,15 +386,6 @@ export function HostList() {
       {showForm && (
         <HostForm host={editingHost} onDone={handleFormDone}
           onCancel={() => { setShowForm(false); setEditingHost(undefined) }} />
-      )}
-
-      {showSettingsModal && (
-        <SettingsModal
-          settings={appSettings}
-          isMac={isMac}
-          onClose={() => setShowSettingsModal(false)}
-          onChange={setAppSettings}
-        />
       )}
     </div>
   )

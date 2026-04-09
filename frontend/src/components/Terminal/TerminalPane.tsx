@@ -53,7 +53,7 @@ export function TerminalPane({ termID, visible, disconnected, fontSize, cursorSt
 
     const terminal = new Terminal({
       fontSize: 13,
-      fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+      fontFamily: 'Consolas, "Courier New", Menlo, Monaco, monospace',
       theme: theme === 'dark' ? { ...DARK_TERMINAL_THEME } : { ...LIGHT_TERMINAL_THEME },
       cursorBlink: true,
     })

@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { HostList } from '../Host/HostList'
 import { KeyList } from '../KeyManager/KeyList'
 import { SessionHistory } from '../Session/SessionHistory'
-import { ShortcutsModal } from '../common/ShortcutsModal'
+import { SettingsModal, AppSettings } from '../Settings/SettingsModal'
 import { useThemeStore } from '../../stores/themeStore'
-import { Server, Key, History, Sun, Moon, Zap, Keyboard } from 'lucide-react'
+import { Server, Key, History, Sun, Moon, Zap, Settings } from 'lucide-react'
 
 type Page = 'hosts' | 'keys' | 'history'
 
@@ -17,7 +17,12 @@ const NAV_ITEMS = [
 export function AppShell() {
   const [page, setPage] = useState<Page>('hosts')
   const { theme, setTheme } = useThemeStore()
-  const [showShortcuts, setShowShortcuts] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
+  const [appSettings, setAppSettings] = useState<AppSettings>({
+    terminal: { fontSize: 13, cursorStyle: 'block', scrollback: 5000 },
+    connection: { connectTimeoutMs: 15000, keepaliveIntervalSec: 60 },
+  })
+  const isMac = navigator.platform.includes('Mac')
 
   return (
     <div className="flex h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 overflow-hidden">
@@ -53,14 +58,14 @@ export function AppShell() {
           })}
         </nav>
 
-        {/* Theme toggle + shortcuts */}
+        {/* Settings + Theme toggle */}
         <div className="flex flex-col items-center pb-3 gap-1">
           <button
-            onClick={() => setShowShortcuts(true)}
-            title="键盘快捷键"
+            onClick={() => setShowSettings(true)}
+            title="设置"
             className="w-10 h-10 flex items-center justify-center rounded-xl text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
           >
-            <Keyboard size={17} />
+            <Settings size={17} />
           </button>
           <button
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
@@ -74,12 +79,19 @@ export function AppShell() {
 
       {/* Main content */}
       <main className="flex-1 min-w-0 overflow-hidden">
-        {page === 'hosts'   && <HostList />}
+        {page === 'hosts'   && <HostList appSettings={appSettings} onSettingsChange={setAppSettings} />}
         {page === 'keys'    && <KeyList />}
         {page === 'history' && <SessionHistory />}
       </main>
 
-      {showShortcuts && <ShortcutsModal onClose={() => setShowShortcuts(false)} />}
+      {showSettings && (
+        <SettingsModal
+          settings={appSettings}
+          isMac={isMac}
+          onClose={() => setShowSettings(false)}
+          onChange={setAppSettings}
+        />
+      )}
     </div>
   )
 }

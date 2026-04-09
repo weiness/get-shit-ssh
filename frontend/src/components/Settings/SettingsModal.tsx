@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, Palette, Terminal, Wifi } from 'lucide-react'
+import { X, Palette, Terminal, Wifi, Keyboard } from 'lucide-react'
 
 export interface TerminalSettings {
   fontSize: number
@@ -24,12 +24,13 @@ interface SettingsModalProps {
   onChange: (settings: AppSettings) => void
 }
 
-type NavItem = '外观' | '终端' | '连接'
+type NavItem = '外观' | '终端' | '连接' | '快捷键'
 
 const NAV_ITEMS: { label: NavItem; icon: typeof Palette }[] = [
   { label: '外观', icon: Palette },
   { label: '终端', icon: Terminal },
   { label: '连接', icon: Wifi },
+  { label: '快捷键', icon: Keyboard },
 ]
 
 export function SettingsModal({ settings, isMac, onClose, onChange }: SettingsModalProps) {
@@ -134,6 +135,29 @@ export function SettingsModal({ settings, isMac, onClose, onChange }: SettingsMo
                     <span className="text-xs text-gray-400">行</span>
                   </div>
                 </SettingRow>
+              </div>
+            )}
+
+            {active === '快捷键' && (
+              <div className="space-y-1">
+                {[
+                  { keys: isMac ? ['⌘', 'C'] : ['Ctrl', 'Shift', 'C'], desc: '复制' },
+                  { keys: isMac ? ['⌘', 'V'] : ['Ctrl', 'Shift', 'V'], desc: '粘贴' },
+                  { keys: ['Ctrl', 'T'],             desc: '新建连接标签页' },
+                  { keys: ['Ctrl', 'W'],             desc: '关闭当前标签页' },
+                  { keys: ['Ctrl', 'Tab'],           desc: '切换到下一个标签页' },
+                  { keys: ['Ctrl', 'Shift', 'Tab'],  desc: '切换到上一个标签页' },
+                  { keys: ['Ctrl', '`'],             desc: '展开 / 收起主机列表' },
+                ].map(({ keys, desc }) => (
+                  <div key={desc} className="flex items-center justify-between py-1.5">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">{desc}</span>
+                    <div className="flex items-center gap-1">
+                      {keys.map((k, i) => (
+                        <span key={i} className="px-1.5 py-0.5 text-xs font-mono bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-gray-700 dark:text-gray-300">{k}</span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
 
