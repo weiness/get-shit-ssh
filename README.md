@@ -1,43 +1,43 @@
 # GSS — Get Shit SSH
 
-A lightweight SSH client and SFTP file manager for desktop, built with Go + React + Wails.
+一款基于 Go + React + Wails 构建的轻量级桌面 SSH 客户端和 SFTP 文件管理器。
 
-![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
+![平台](https://img.shields.io/badge/平台-Windows%20%7C%20macOS-blue)
+![许可证](https://img.shields.io/badge/许可证-MIT-green)
 ![Go](https://img.shields.io/badge/Go-1.21+-00ADD8)
 ![React](https://img.shields.io/badge/React-18-61DAFB)
 
-## Features
+## 功能特性
 
-- **Multi-tab terminal** — open multiple SSH sessions side by side, switch with `Ctrl+Tab`
-- **SSH authentication** — password and SSH key (Ed25519 / ECDSA / RSA)
-- **SSH key manager** — generate, import, and manage keys in-app
-- **SFTP file browser** — browse, upload, download, rename, delete remote files
-- **Connection test** — verify credentials before saving a host
-- **Session history** — log of past connections
-- **Dark / light theme**
-- **Keyboard shortcuts** — `Ctrl+T`, `Ctrl+W`, `Ctrl+Tab`, and more
+- **多标签终端** — 并排开启多个 SSH 会话，`Ctrl+Tab` 切换
+- **SSH 认证** — 支持密码和 SSH 密钥（Ed25519 / ECDSA / RSA）
+- **SSH 密钥管理器** — 在应用内生成、导入和管理密钥
+- **SFTP 文件浏览器** — 浏览、上传、下载、重命名、删除远程文件
+- **连接测试** — 保存主机前先验证凭据
+- **会话历史** — 记录历史连接
+- **深色 / 浅色主题**
+- **键盘快捷键** — `Ctrl+T`、`Ctrl+W`、`Ctrl+Tab` 等
 
-## Screenshots
+## 截图
 
-> Coming soon
+> 即将上线
 
-## Installation
+## 安装
 
-### Download
+### 下载
 
-Pre-built binaries are available on the [Releases](https://github.com/weiness/get-shit-ssh/releases) page.
+在 [Releases](https://github.com/weiness/get-shit-ssh/releases) 页面下载预构建二进制文件。
 
-| Platform | Architecture | File |
-|----------|-------------|------|
-| Windows  | x64 (Intel/AMD) | `gss-windows-amd64.exe` |
-| Windows  | ARM64 | `gss-windows-arm64.exe` |
-| macOS    | Intel | `gss-macos-intel.app.zip` |
-| macOS    | Apple Silicon (M1/M2/M3) | `gss-macos-apple-silicon.app.zip` |
+| 平台 | 架构 | 文件 |
+|------|------|------|
+| Windows | x64 (Intel/AMD) | `gss-windows-amd64.exe` |
+| Windows | ARM64 | `gss-windows-arm64.exe` |
+| macOS | Intel | `gss-macos-intel.app.zip` |
+| macOS | Apple Silicon (M1/M2/M3) | `gss-macos-apple-silicon.app.zip` |
 
-### Build from source
+### 从源码构建
 
-**Prerequisites**
+**前置依赖**
 
 - [Go 1.21+](https://go.dev/dl/)
 - [Node.js 18+](https://nodejs.org/)
@@ -47,77 +47,77 @@ Pre-built binaries are available on the [Releases](https://github.com/weiness/ge
 go install github.com/wailsapp/wails/v2/cmd/wails@latest
 ```
 
-**Build**
+**构建**
 
 ```bash
 git clone https://github.com/weiness/get-shit-ssh.git
 cd get-shit-ssh
 
-# Install frontend dependencies
+# 安装前端依赖
 cd frontend && npm install && cd ..
 
-# Development (hot reload)
+# 开发模式（热重载）
 wails dev
 
-# Production build
+# 生产构建
 wails build
 ```
 
-Output binary is in `build/bin/`.
+输出二进制在 `build/bin/` 目录。
 
-## Keyboard Shortcuts
+## 键盘快捷键
 
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl+T` | New connection tab |
-| `Ctrl+W` | Close current tab |
-| `Ctrl+Tab` | Next tab |
-| `Ctrl+Shift+Tab` | Previous tab |
-| `` Ctrl+` `` | Toggle host panel |
+| 快捷键 | 功能 |
+|--------|------|
+| `Ctrl+T` | 新建连接标签页 |
+| `Ctrl+W` | 关闭当前标签页 |
+| `Ctrl+Tab` | 下一个标签页 |
+| `Ctrl+Shift+Tab` | 上一个标签页 |
+| `` Ctrl+` `` | 展开/收起主机面板 |
 
-## Tech Stack
+## 技术栈
 
-| Layer | Technology |
-|-------|-----------|
-| Desktop shell | [Wails v2](https://wails.io) |
-| Backend | Go, `golang.org/x/crypto/ssh` |
-| Frontend | React 18, TypeScript, Tailwind CSS |
-| Terminal | [xterm.js](https://xtermjs.org/) |
-| State | Zustand |
-| Storage | SQLite (via `modernc.org/sqlite`) |
+| 层级 | 技术 |
+|------|------|
+| 桌面壳 | [Wails v2](https://wails.io) |
+| 后端 | Go、`golang.org/x/crypto/ssh` |
+| 前端 | React 18、TypeScript、Tailwind CSS |
+| 终端 | [xterm.js](https://xtermjs.org/) |
+| 状态管理 | Zustand |
+| 存储 | SQLite（via `modernc.org/sqlite`） |
 
-## Project Structure
+## 项目结构
 
 ```
 get-shit-ssh/
-├── app.go              # Wails IPC bindings
+├── app.go              # Wails IPC 绑定
 ├── main.go
 ├── internal/
-│   ├── ssh/            # SSH client, PTY terminal, SFTP
-│   ├── store/          # SQLite: hosts, keys, sessions
-│   └── crypto/         # Credential encryption
+│   ├── ssh/            # SSH 客户端、PTY 终端、SFTP
+│   ├── store/          # SQLite：主机、密钥、会话
+│   └── crypto/         # 凭据加密
 └── frontend/
     └── src/
-        ├── components/ # UI components
-        ├── stores/     # Zustand state
-        └── hooks/      # useTerminalIO, etc.
+        ├── components/ # UI 组件
+        ├── stores/     # Zustand 状态
+        └── hooks/      # useTerminalIO 等
 ```
 
-## Security Notes
+## 安全说明
 
-- Credentials are encrypted at rest using AES-GCM before being stored in SQLite
-- Host key verification is currently set to `InsecureIgnoreHostKey` — strict host key checking is planned
+- 凭据使用 AES-GCM 加密后存入 SQLite
+- 主机密钥验证目前设置为 `InsecureIgnoreHostKey`，严格验证功能规划中
 
-## Contributing
+## 贡献
 
-Pull requests are welcome. For major changes, please open an issue first.
+欢迎提交 Pull Request。重大变更请先开 Issue 讨论。
 
 ```bash
 git checkout -b feature/your-feature
-git commit -m "feat: describe your change"
+git commit -m "feat: 描述你的改动"
 git push origin feature/your-feature
 ```
 
-## License
+## 许可证
 
 [MIT](LICENSE)

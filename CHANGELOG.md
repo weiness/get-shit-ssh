@@ -1,19 +1,19 @@
-# Changelog
+# 更新日志
 
 ## v1.0.0 (2025-07-11)
 
-### Features
-- Multi-tab SSH terminal — open multiple sessions side by side
-- SSH authentication via password and key (Ed25519 / ECDSA / RSA)
-- SSH key manager — generate, import, and manage keys in-app
-- SFTP file browser — browse, upload, download, rename, delete remote files
-- Connection status indicator on each tab (green = connected, red = disconnected)
-- Reconnect button shown on disconnect
-- Parallel connections — connect to multiple hosts simultaneously
-- Keyboard shortcuts: `Ctrl+T`, `Ctrl+W`, `Ctrl+Tab`, `Ctrl+Shift+Tab`, `` Ctrl+` ``
-- Shortcuts reference modal (keyboard icon in sidebar)
-- Dark / light theme
+### 新功能
+- 多标签 SSH 终端——可同时开启多个会话并排显示
+- SSH 认证支持密码和密钥（Ed25519 / ECDSA / RSA）
+- SSH 密钥管理器——在应用内生成、导入和管理密钥
+- SFTP 文件浏览器——浏览、上传、下载、重命名、删除远程文件
+- 标签页连接状态指示器（绿色 = 已连接，红色 = 已断开）
+- 断开连接时显示重连按钮
+- 并行连接——可同时连接多台主机
+- 键盘快捷键：`Ctrl+T`、`Ctrl+W`、`Ctrl+Tab`、`Ctrl+Shift+Tab`、`` Ctrl+` ``
+- 快捷键参考弹窗（侧边栏键盘图标）
+- 深色 / 浅色主题
 
-### Improvements
-- Connection and reconnect timeout set to 15 seconds with clear error message
-- Closing the last tab automatically returns to the host list
+### 优化
+- 连接和重连超时设为 15 秒，并显示明确的错误提示
+- 关闭最后一个标签页后自动返回主机列表
