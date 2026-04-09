@@ -1,7 +1,7 @@
 # State: GSS
 
 **Status**: active
-**Last activity**: 2026-04-09 - Completed quick task 260409-qxd: 终端快捷键与字体设置：复制粘贴快捷键、字体大小缩放、设置菜单、macOS支持
+**Last activity**: 2026-04-09 - Completed quick task 260409-rx0: 设置弹窗重构 — 移至左侧工具栏，外观/终端/连接三分类弹窗
 
 ## Current Position
 
@@ -37,3 +37,4 @@ v1.0.1 细节打磨 — Phases 4-5
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260409-qxd | 终端快捷键与字体设置：复制粘贴快捷键、字体大小缩放、设置菜单、macOS支持 | 2026-04-09 | 397e764 | [260409-qxd-macos](./quick/260409-qxd-macos/) |
+| 260409-rx0 | 设置弹窗重构：移至左侧工具栏，外观/终端/连接三分类弹窗 | 2026-04-09 | — | [260409-rx0-settings-modal](./quick/260409-rx0-settings-modal/) |

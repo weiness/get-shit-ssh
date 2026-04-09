@@ -27,12 +27,14 @@ interface TerminalPaneProps {
   visible: boolean
   disconnected?: boolean
   fontSize?: number
+  cursorStyle?: 'block' | 'underline' | 'bar'
+  scrollback?: number
   onReconnect?: () => void
   onDisconnected?: () => void
   onKeyboardShortcut?: (e: KeyboardEvent) => boolean
 }
 
-export function TerminalPane({ termID, visible, disconnected, fontSize, onReconnect, onDisconnected, onKeyboardShortcut }: TerminalPaneProps) {
+export function TerminalPane({ termID, visible, disconnected, fontSize, cursorStyle, scrollback, onReconnect, onDisconnected, onKeyboardShortcut }: TerminalPaneProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const termRef = useRef<Terminal | null>(null)
   const fitAddonRef = useRef<FitAddon | null>(null)
@@ -126,6 +128,18 @@ export function TerminalPane({ termID, visible, disconnected, fontSize, onReconn
     termRef.current.options.fontSize = fontSize
     fitAddonRef.current?.fit()
   }, [fontSize])
+
+  // Update cursor style when prop changes
+  useEffect(() => {
+    if (!termRef.current || cursorStyle === undefined) return
+    termRef.current.options.cursorStyle = cursorStyle
+  }, [cursorStyle])
+
+  // Update scrollback when prop changes
+  useEffect(() => {
+    if (!termRef.current || scrollback === undefined) return
+    termRef.current.options.scrollback = scrollback
+  }, [scrollback])
 
   // Close context menu on outside click
   useEffect(() => {
