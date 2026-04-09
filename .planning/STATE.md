@@ -1,7 +1,7 @@
 # State: GSS
 
 **Status**: active
-**Last activity**: 2026-04-09 — Milestone v1.0.1 started
+**Last activity**: 2026-04-09 - Completed quick task 260409-qxd: 终端快捷键与字体设置：复制粘贴快捷键、字体大小缩放、设置菜单、macOS支持
 
 ## Current Position
 
@@ -31,3 +31,9 @@ v1.0.1 细节打磨 — Phases 4-5
 - 已知技术债：加密密钥硬编码为零值，待后续修复
 - 终端主题颜色在 TerminalPane.tsx 中硬编码，需与 themeStore 联动
 - SFTPBrowser 已有 contextMenu 实现可参考，终端右键菜单可参照该模式
+
+## Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260409-qxd | 终端快捷键与字体设置：复制粘贴快捷键、字体大小缩放、设置菜单、macOS支持 | 2026-04-09 | 397e764 | [260409-qxd-macos](./quick/260409-qxd-macos/) |
