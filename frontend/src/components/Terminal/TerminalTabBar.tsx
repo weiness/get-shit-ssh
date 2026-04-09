@@ -1,10 +1,13 @@
 import { X, Terminal, Plus } from 'lucide-react'
+import { useThemeStore } from '../../stores/themeStore'
 
 export interface TermTab {
   termID: string
   sessionID: string
   hostID: string
   hostName: string
+  hostUser?: string
+  hostAddr?: string
   isHome?: boolean
   status?: 'connected' | 'disconnected'
 }
@@ -18,6 +21,9 @@ interface TerminalTabBarProps {
 
 export function TerminalTabBar({ tabs, activeTermID, onSelect, onClose }: TerminalTabBarProps) {
   if (tabs.length === 0) return null
+  const { theme } = useThemeStore()
+  const activeBg = theme === 'dark' ? 'bg-[#1e1e2e]' : 'bg-[#fdf6e3]'
+  const activeText = theme === 'dark' ? 'text-green-400' : 'text-[#657b83]'
   return (
     <div className="flex items-stretch overflow-x-auto">
       {tabs.map((tab) => {
@@ -26,10 +32,11 @@ export function TerminalTabBar({ tabs, activeTermID, onSelect, onClose }: Termin
         return (
           <button
             key={tab.termID}
+            title={tab.isHome ? '新连接' : tab.hostUser && tab.hostAddr ? `${tab.hostName}\n${tab.hostUser}@${tab.hostAddr}` : tab.hostName}
             onClick={() => onSelect(tab.termID)}
             className={`relative flex items-center gap-2 px-4 py-2 text-xs border-r border-gray-300 dark:border-gray-600 whitespace-nowrap select-none transition-colors ${
               isActive
-                ? 'bg-[#1e1e2e] text-green-400'
+                ? `${activeBg} ${activeText}`
                 : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200'
             }`}
           >

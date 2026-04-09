@@ -76,7 +76,12 @@ export function HostList() {
     try {
       const sessionID = await connectWithTimeout(connect(hostID, hostName))
       const termID = await openTerminal(sessionID, 24, 80)
-      const newTab: TermTab = { termID, sessionID, hostID, hostName, status: 'connected' }
+      const hostObj = hosts.find(h => h.id === hostID)
+      const newTab: TermTab = {
+        termID, sessionID, hostID, hostName, status: 'connected',
+        hostUser: hostObj?.username,
+        hostAddr: hostObj ? `${hostObj.host}:${hostObj.port}` : undefined,
+      }
       setTabs((prev) => {
         if (replaceTabID) return prev.map((t) => t.termID === replaceTabID ? newTab : t)
         return [...prev, newTab]
@@ -88,7 +93,7 @@ export function HostList() {
     } finally {
       removeConnecting(hostID)
     }
-  }, [connect, openTerminal, connectingHosts])
+  }, [connect, openTerminal, connectingHosts, hosts])
 
   const handleReconnect = useCallback(async (tab: TermTab) => {
     if (connectingHosts.has(tab.hostID)) return
@@ -97,7 +102,12 @@ export function HostList() {
     try {
       const sessionID = await connectWithTimeout(connect(tab.hostID, tab.hostName))
       const termID = await openTerminal(sessionID, 24, 80)
-      const newTab: TermTab = { termID, sessionID, hostID: tab.hostID, hostName: tab.hostName, status: 'connected' }
+      const hostObj = hosts.find(h => h.id === tab.hostID)
+      const newTab: TermTab = {
+        termID, sessionID, hostID: tab.hostID, hostName: tab.hostName, status: 'connected',
+        hostUser: hostObj?.username,
+        hostAddr: hostObj ? `${hostObj.host}:${hostObj.port}` : undefined,
+      }
       setTabs((prev) => prev.map((t) => t.termID === tab.termID ? newTab : t))
       setActiveTermID(termID)
     } catch (error) {
@@ -106,7 +116,7 @@ export function HostList() {
     } finally {
       removeConnecting(tab.hostID)
     }
-  }, [connect, openTerminal, connectingHosts])
+  }, [connect, openTerminal, connectingHosts, hosts])
 
   const handleTabDisconnected = useCallback((termID: string) => {
     setTabs((prev) => prev.map((t) => t.termID === termID ? { ...t, status: 'disconnected' } : t))

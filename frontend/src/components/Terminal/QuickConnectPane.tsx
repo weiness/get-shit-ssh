@@ -1,5 +1,6 @@
 import { Terminal, Server } from 'lucide-react'
 import { Host } from '../../types/host'
+import { useThemeStore } from '../../stores/themeStore'
 
 interface QuickConnectPaneProps {
   hosts: Host[]
@@ -8,8 +9,9 @@ interface QuickConnectPaneProps {
 }
 
 export function QuickConnectPane({ hosts, connectingHosts, onConnect }: QuickConnectPaneProps) {
+  const { theme } = useThemeStore()
   return (
-    <div className="flex flex-col items-center justify-center h-full bg-gray-50 dark:bg-[#1e1e2e] text-gray-700 dark:text-gray-300 px-8 gap-6">
+    <div className={`flex flex-col items-center justify-center h-full text-gray-700 dark:text-gray-300 px-8 gap-6 ${theme === 'dark' ? 'bg-[#1e1e2e]' : 'bg-[#fdf6e3]'}`}>
       <div className="flex flex-col items-center gap-2 text-center">
         <Server size={32} className="text-blue-400 opacity-60" />
         <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300">选择主机连接</h2>
