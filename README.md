@@ -28,11 +28,12 @@ A lightweight SSH client and SFTP file manager for desktop, built with Go + Reac
 
 Pre-built binaries are available on the [Releases](https://github.com/weiness/get-shit-ssh/releases) page.
 
-| Platform | File |
-|----------|------|
-| Windows  | `gss-windows-amd64.exe` |
-| macOS    | `gss-darwin-universal.app` |
-| Linux    | `gss-linux-amd64` |
+| Platform | Architecture | File |
+|----------|-------------|------|
+| Windows  | x64 (Intel/AMD) | `gss-windows-amd64.exe` |
+| Windows  | ARM64 | `gss-windows-arm64.exe` |
+| macOS    | Intel | `gss-macos-intel.app.zip` |
+| macOS    | Apple Silicon (M1/M2/M3) | `gss-macos-apple-silicon.app.zip` |
 
 ### Build from source
 

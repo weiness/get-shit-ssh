@@ -9,19 +9,25 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  build:
     strategy:
       matrix:
         include:
           - os: windows-latest
             platform: windows/amd64
-            artifact: gss.exe
             output: gss-windows-amd64.exe
 
+          - os: windows-latest
+            platform: windows/arm64
+            output: gss-windows-arm64.exe
+
           - os: macos-latest
-            platform: darwin/universal
-            artifact: gss.app
-            output: gss-macos-universal.app.zip
+            platform: darwin/amd64
+            output: gss-macos-intel.app.zip
+
+          - os: macos-latest
+            platform: darwin/arm64
+            output: gss-macos-apple-silicon.app.zip
 
     runs-on: ${{ matrix.os }}
 
@@ -44,20 +50,21 @@ jobs:
 
       - name: Build (Windows)
         if: matrix.os == 'windows-latest'
-        run: wails build -platform ${{ matrix.platform }} -o ${{ matrix.artifact }}
+        run: |
+          wails build -platform ${{ matrix.platform }} -o ${{ matrix.output }}
 
       - name: Build (macOS)
         if: matrix.os == 'macos-latest'
         run: |
           wails build -platform ${{ matrix.platform }}
-          cd build/bin && zip -r ${{ matrix.output }} gss.app
+          cd build/bin && zip -r ${{ matrix.output }} gss.app && rm -rf gss.app
 
       - name: Upload artifact (Windows)
         if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.output }}
-          path: build/bin/${{ matrix.artifact }}
+          path: build/bin/${{ matrix.output }}
 
       - name: Upload artifact (macOS)
         if: matrix.os == 'macos-latest'
@@ -67,7 +74,7 @@ jobs:
           path: build/bin/${{ matrix.output }}
 
   publish:
-    needs: release
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -77,22 +84,26 @@ jobs:
         with:
           path: dist/
 
-      - name: Extract changelog
-        id: changelog
+      - name: Extract changelog for this version
         run: |
           VERSION="${{ github.ref_name }}"
-          BODY=$(awk "/^## ${VERSION}/,/^## v[0-9]/" CHANGELOG.md | sed '$d')
-          echo "body<<EOF" >> $GITHUB_OUTPUT
-          echo "$BODY" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          awk "/^## ${VERSION}/,/^## v[0-9]+\.[0-9]+\.[0-9]+/" CHANGELOG.md \
+            | head -n -1 \
+            > release-notes.md
+          # Fallback: if empty, just use the version line
+          if [ ! -s release-notes.md ]; then
+            echo "## ${VERSION}" > release-notes.md
+          fi
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           name: GSS ${{ github.ref_name }}
-          body: ${{ steps.changelog.outputs.body }}
+          body_path: release-notes.md
           files: |
-            dist/gss-windows-amd64.exe/gss.exe
-            dist/gss-macos-universal.app.zip/gss-macos-universal.app.zip
+            dist/gss-windows-amd64.exe/gss-windows-amd64.exe
+            dist/gss-windows-arm64.exe/gss-windows-arm64.exe
+            dist/gss-macos-intel.app.zip/gss-macos-intel.app.zip
+            dist/gss-macos-apple-silicon.app.zip/gss-macos-apple-silicon.app.zip
           draft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
