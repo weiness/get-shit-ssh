@@ -26,12 +26,13 @@ interface TerminalPaneProps {
   termID: string
   visible: boolean
   disconnected?: boolean
+  fontSize?: number
   onReconnect?: () => void
   onDisconnected?: () => void
   onKeyboardShortcut?: (e: KeyboardEvent) => boolean
 }
 
-export function TerminalPane({ termID, visible, disconnected, onReconnect, onDisconnected, onKeyboardShortcut }: TerminalPaneProps) {
+export function TerminalPane({ termID, visible, disconnected, fontSize, onReconnect, onDisconnected, onKeyboardShortcut }: TerminalPaneProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const termRef = useRef<Terminal | null>(null)
   const fitAddonRef = useRef<FitAddon | null>(null)
@@ -39,6 +40,7 @@ export function TerminalPane({ termID, visible, disconnected, onReconnect, onDis
   const [term, setTerm] = useState<Terminal | null>(null)
   const { theme } = useThemeStore()
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; hasSelection: boolean } | null>(null)
+  const isMac = navigator.platform.includes('Mac')
 
   const { resize } = useTerminalIO(termID, term, onDisconnected)
 
@@ -77,12 +79,25 @@ export function TerminalPane({ termID, visible, disconnected, onReconnect, onDis
     }
   }, [])
 
-  // Attach custom keyboard shortcut handler to xterm
+  // Use refs to avoid stale closures in xterm key handler
+  const handleCopyRef = useRef<() => void>(() => {})
+  const handlePasteRef = useRef<() => void>(() => {})
+
+  // Attach custom keyboard shortcut handler to xterm (copy/paste + app shortcuts)
   useEffect(() => {
-    if (term && onKeyboardShortcut) {
-      term.attachCustomKeyEventHandler(onKeyboardShortcut)
-    }
-  }, [term, onKeyboardShortcut])
+    if (!term) return
+    term.attachCustomKeyEventHandler((e: KeyboardEvent) => {
+      // macOS: Cmd+C / Cmd+V; Windows/Linux: Ctrl+Shift+C / Ctrl+Shift+V
+      if (isMac) {
+        if (e.metaKey && e.key === 'c') { handleCopyRef.current(); return false }
+        if (e.metaKey && e.key === 'v') { handlePasteRef.current(); return false }
+      } else {
+        if (e.ctrlKey && e.shiftKey && e.key === 'C') { handleCopyRef.current(); return false }
+        if (e.ctrlKey && e.shiftKey && e.key === 'V') { handlePasteRef.current(); return false }
+      }
+      return onKeyboardShortcut ? onKeyboardShortcut(e) : true
+    })
+  }, [term, onKeyboardShortcut, isMac])
 
   // Fit and focus when becoming visible
   useEffect(() => {
@@ -105,6 +120,13 @@ export function TerminalPane({ termID, visible, disconnected, onReconnect, onDis
     termRef.current.options.theme = { ...newTheme }
   }, [theme])
 
+  // Update font size when prop changes
+  useEffect(() => {
+    if (!termRef.current || fontSize === undefined) return
+    termRef.current.options.fontSize = fontSize
+    fitAddonRef.current?.fit()
+  }, [fontSize])
+
   // Close context menu on outside click
   useEffect(() => {
     if (!contextMenu) return
@@ -118,12 +140,14 @@ export function TerminalPane({ termID, visible, disconnected, onReconnect, onDis
     if (text) await ClipboardSetText(text)
     setContextMenu(null)
   }
+  handleCopyRef.current = handleCopy
 
   const handlePaste = async () => {
     const text = await ClipboardGetText()
     if (text && termRef.current) termRef.current.paste(text)
     setContextMenu(null)
   }
+  handlePasteRef.current = handlePaste
 
   const handleClear = () => {
     termRef.current?.clear()
@@ -156,12 +180,14 @@ export function TerminalPane({ termID, visible, disconnected, onReconnect, onDis
             className="w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 text-left disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent dark:disabled:hover:bg-transparent"
           >
             <Copy size={13} /> 复制
+            <span className="ml-auto text-xs text-gray-400">{isMac ? '⌘C' : 'Ctrl+Shift+C'}</span>
           </button>
           <button
             onClick={handlePaste}
             className="w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 text-left"
           >
             <ClipboardPaste size={13} /> 粘贴
+            <span className="ml-auto text-xs text-gray-400">{isMac ? '⌘V' : 'Ctrl+Shift+V'}</span>
           </button>
           <div className="my-1 border-t border-gray-200 dark:border-gray-700" />
           <button
