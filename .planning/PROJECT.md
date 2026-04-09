@@ -36,8 +36,14 @@
 
 ### Active
 
-- [ ] 严格主机密钥验证（Host Key Verification）——目前为 `InsecureIgnoreHostKey`
-- [ ] 连接分组 / 文件夹组织
+- [ ] 终端右键菜单（复制/粘贴/清空）
+- [ ] 亮色主题护眼终端配色
+- [ ] 删除主机二次确认弹窗
+- [ ] 连接失败改用 Toast
+- [ ] Tab 悬停 tooltip 显示完整主机信息
+- [ ] 主机列表按分组折叠/展开
+- [ ] 修复激活 tab 背景色与终端主题联动
+- [ ] 严格主机密钥验证（Host Key Verification）——目前为 `InsecureIgnoreHostKey`（延期）
 
 ### Out of Scope
 
@@ -57,6 +63,19 @@
 | xterm.js 终端 | ✓ 正确 | 成熟稳定，原生支持 ANSI 转义序列 |
 | 手动 CHANGELOG（非自动生成） | ✓ 正确 | 自动生成 release notes 不够易读，手写更有价值 |
 
+## Current Milestone: v1.1 细节打磨
+
+**Goal:** 修复交互细节、提升终端体验、统一视觉一致性，不添加新功能
+
+**Target features:**
+- 终端右键菜单（复制/粘贴/清空）
+- 亮色主题护眼终端配色（暗色保持不变）
+- 删除主机二次确认弹窗
+- 连接失败改用 Toast（替换 alert()）
+- Tab 悬停 tooltip 显示完整主机信息
+- 主机列表按分组折叠/展开
+- 修复激活 tab 背景色与终端主题联动
+
 ## Context
 
 - **当前版本**: v1.0.0（2026-04-09 发布）
@@ -66,4 +85,4 @@
 - **下一个里程碑候选**: 严格主机密钥验证、连接分组
 
 ---
-*Last updated: 2026-04-09 after v1.0 milestone*
+*Last updated: 2026-04-09 after v1.0 milestone, v1.1 started*

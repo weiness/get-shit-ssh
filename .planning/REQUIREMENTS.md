@@ -1,31 +1,45 @@
-# Requirements: GSS v1.0
+# Requirements: GSS v1.1 细节打磨
 
-> ⚠️ 已归档 — 此文件为 v1.0 里程碑归档版本。当前需求见 PROJECT.md。
+## 终端体验
 
-## 功能需求
+- [ ] **TERM-01**: 用户在终端区域右键可弹出上下文菜单，包含「复制」「粘贴」「清空」三项操作
+- [ ] **TERM-02**: 「复制」仅在有选中文本时可用，无选中时置灰
+- [ ] **TERM-03**: 亮色主题下终端背景切换为护眼色（米白/浅绿），前景色相应调整；暗色主题保持原 Catppuccin Mocha 配色不变
+- [ ] **TERM-04**: 激活 tab 的背景色与当前终端主题背景色保持一致（亮色/暗色联动）
 
-| ID | 需求 | 状态 | 阶段 |
-|----|------|------|------|
-| REQ-01 | 多标签 SSH 终端，支持并行连接 | ✅ Complete | Phase 1 |
-| REQ-02 | SSH 密码认证 | ✅ Complete | Phase 1 |
-| REQ-03 | SSH 密钥认证（Ed25519 / ECDSA / RSA） | ✅ Complete | Phase 1 |
-| REQ-04 | 应用内 SSH 密钥生成与导入 | ✅ Complete | Phase 1 |
-| REQ-05 | SFTP 文件浏览、上传、下载、重命名、删除 | ✅ Complete | Phase 2 |
-| REQ-06 | 连接前测试验证 | ✅ Complete | Phase 2 |
-| REQ-07 | 会话历史记录 | ✅ Complete | Phase 2 |
-| REQ-08 | 深色 / 浅色主题 | ✅ Complete | Phase 2 |
-| REQ-09 | 键盘快捷键 | ✅ Complete | Phase 2 |
-| REQ-10 | 凭据 AES-GCM 加密存储 | ✅ Complete | Phase 1 |
-| REQ-11 | GitHub Actions 自动构建发布 | ✅ Complete | Phase 3 |
-| REQ-12 | 标签页连接状态指示器 | ✅ Complete | Phase 2 |
-| REQ-13 | 断开重连按钮 | ✅ Complete | Phase 2 |
+## 主机管理
 
-## 需求变更记录
+- [ ] **HOST-01**: 用户点击删除主机按钮后，弹出确认对话框，需二次确认才执行删除
+- [ ] **HOST-02**: 主机列表按 `groupName` 分组展示，每个分组可独立折叠/展开
+- [ ] **HOST-03**: 无分组的主机归入「未分组」或直接平铺在分组列表末尾
 
-- REQ-11 CI 构建：初期包含 Linux，后移除（用户群体以 Win/Mac 为主）
-- REQ-11 CI Changelog：最终采用手动 CHANGELOG + awk 提取方案
+## 交互反馈
 
-## 延期需求（转入 v1.1）
+- [ ] **UX-01**: 连接主机失败时，使用 Toast 通知替代原生 `alert()` 弹窗
+- [ ] **UX-02**: 重连失败时，同样使用 Toast 通知
+- [ ] **UX-03**: Tab 标签鼠标悬停时，显示 tooltip 包含完整主机名和 `user@host:port` 信息
 
-- 严格主机密钥验证（当前 `InsecureIgnoreHostKey`）
-- 连接分组 / 文件夹
+## Future Requirements（延期）
+
+- 严格主机密钥验证（Host Key Verification）
+- 连接分组文件夹（嵌套分组）
+
+## Out of Scope
+
+- 终端字体大小调节——v1.1 不做，避免引入设置持久化复杂度
+- 自动重连——需要后端心跳机制，超出打磨范围
+
+## Traceability
+
+| REQ-ID | Phase | Status |
+|--------|-------|--------|
+| TERM-01 | Phase 4 | — |
+| TERM-02 | Phase 4 | — |
+| TERM-03 | Phase 4 | — |
+| TERM-04 | Phase 4 | — |
+| HOST-01 | Phase 5 | — |
+| HOST-02 | Phase 5 | — |
+| HOST-03 | Phase 5 | — |
+| UX-01 | Phase 5 | — |
+| UX-02 | Phase 5 | — |
+| UX-03 | Phase 4 | — |
