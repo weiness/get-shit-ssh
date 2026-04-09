@@ -310,7 +310,7 @@ export function HostList() {
       {hostPanelOpen && (
         <div
           ref={panelRef}
-          className="absolute left-0 top-0 bottom-0 z-20 w-72 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 shadow-xl flex flex-col"
+          className="absolute left-0 top-0 bottom-0 z-20 w-80 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 shadow-xl flex flex-col"
         >
           {HostPanel}
         </div>

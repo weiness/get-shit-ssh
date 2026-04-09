@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
+import { WebglAddon } from '@xterm/addon-webgl'
 import '@xterm/xterm/css/xterm.css'
 import { RefreshCw, Copy, ClipboardPaste, Eraser } from 'lucide-react'
 import { ClipboardGetText, ClipboardSetText } from '../../../wailsjs/runtime/runtime'
@@ -60,6 +61,16 @@ export function TerminalPane({ termID, visible, disconnected, fontSize, cursorSt
     const fitAddon = new FitAddon()
     terminal.loadAddon(fitAddon)
     terminal.open(containerRef.current)
+
+    // WebGL renderer for crisp text rendering on HiDPI screens
+    try {
+      const webglAddon = new WebglAddon()
+      webglAddon.onContextLoss(() => webglAddon.dispose())
+      terminal.loadAddon(webglAddon)
+    } catch {
+      // fallback to canvas renderer if WebGL is unavailable
+    }
+
     fitAddon.fit()
     terminal.focus()
 

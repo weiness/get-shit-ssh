@@ -234,30 +234,32 @@ export function HostForm({ host, onDone, onCancel }: HostFormProps) {
           )}
 
           {/* Test connection */}
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={handleTest}
-              disabled={testState === 'testing'}
-              className="flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
-            >
-              {testState === 'testing'
-                ? <Loader2 size={14} className="animate-spin" />
-                : <Wifi size={14} />}
-              {testState === 'testing' ? '测试中...' : '测试连接'}
-            </button>
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleTest}
+                disabled={testState === 'testing'}
+                className="shrink-0 flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+              >
+                {testState === 'testing'
+                  ? <Loader2 size={14} className="animate-spin" />
+                  : <Wifi size={14} />}
+                {testState === 'testing' ? '测试中...' : '测试连接'}
+              </button>
 
-            {testState === 'ok' && (
-              <span className="flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400">
-                <CheckCircle size={15} />
-                {testMsg}
-              </span>
-            )}
+              {testState === 'ok' && (
+                <span className="flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400">
+                  <CheckCircle size={15} className="shrink-0" />
+                  {testMsg}
+                </span>
+              )}
+            </div>
             {testState === 'fail' && (
-              <span className="flex items-center gap-1.5 text-sm text-red-500 min-w-0">
-                <XCircle size={15} className="shrink-0" />
-                <span className="truncate" title={testMsg}>{testMsg}</span>
-              </span>
+              <div className="flex items-start gap-1.5 text-sm text-red-500">
+                <XCircle size={15} className="shrink-0 mt-0.5" />
+                <span>{testMsg}</span>
+              </div>
             )}
           </div>
 
